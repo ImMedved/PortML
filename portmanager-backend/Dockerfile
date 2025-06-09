@@ -5,6 +5,8 @@ COPY src ./src
 RUN mvn -q -DskipTests package
 
 FROM openjdk:17-slim
+RUN apt-get update && apt-get install -y curl
+
 WORKDIR /app
 COPY --from=build /src/target/backend.jar app.jar
 EXPOSE 8080

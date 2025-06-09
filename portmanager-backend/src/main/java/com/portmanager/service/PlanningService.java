@@ -3,6 +3,7 @@ package com.portmanager.service;
 import com.portmanager.client.MlServiceClient;
 import com.portmanager.dto.*;
 import com.portmanager.entity.*;
+import com.portmanager.repository.ShipRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.modelmapper.ModelMapper;
@@ -20,6 +21,9 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class PlanningService {
 
+    private final ShipRepository shipRepo;                 // ← уже есть? иначе создайте
+    private final ScenarioGeneratorService generatorService;
+
     private final DataService dataService;
     private final MlServiceClient mlClient;
     private final ModelMapper mapper = new ModelMapper();  // quick mapper; configure later
@@ -27,6 +31,12 @@ public class PlanningService {
     private PlanResponseDto lastPlan;
 
     public PlanResponseDto generatePlan(com.portmanager.model.PlanningAlgorithm algorithm) {
+
+
+        // ──► 1. если базм а пуста – генерируем 20
+        if (shipRepo.count() == 0) {
+            generatorService.generate(20);                 // любое число больше 1
+        }
 
         PlanRequestDto req = PlanRequestDto.builder()
                 .port(buildPortDto())
@@ -83,4 +93,5 @@ public class PlanningService {
                 .weatherEvents(weather)
                 .build();
     }
+
 }

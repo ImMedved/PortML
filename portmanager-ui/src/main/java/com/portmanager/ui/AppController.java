@@ -141,6 +141,12 @@ public class AppController {
     }
 
     private void renderPlan(PlanResponse plan) {
+
+        if (plan.getSchedule() == null || plan.getSchedule().isEmpty()) {
+            showError("Empty plan", "ML-service returned empty plan.");
+            return;
+        }
+
         planGrid.getChildren().clear();
 
         // Сбор уникальных терминалов и временных отметок

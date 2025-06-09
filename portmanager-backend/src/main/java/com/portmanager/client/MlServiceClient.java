@@ -9,21 +9,39 @@ import com.portmanager.dto.PairwiseFeedbackDto;
 import com.portmanager.dto.PlanRequestDto;
 import com.portmanager.dto.PlanResponseDto;
 
+import jakarta.annotation.PostConstruct;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 /**
  * MlServiceClient
  *
  * Thin wrapper around HTTP calls to FastAPI ML service.
- * All endpoints are fixed under the <code>/v1</code> prefix (see main.py in ML service).
+ * All endpoints are fixed under the /v1 prefix.
  */
 @Component
 @RequiredArgsConstructor
 public class MlServiceClient {
 
+    private static final Logger log = LoggerFactory.getLogger(MlServiceClient.class);
+
     private final RestTemplate restTemplate;
 
-    //URL can be overridden via application.yml (ml.service.url).
-    @Value("${ml.service.url:http://localhost:8000/v1}")
+    @Value("${ml.service.url:http://localhost:8000}")
+    private String baseUrl;
+
     private String mlServiceUrl;
+
+    @PostConstruct
+    private void init() {
+        // ensure it ends with /v1
+        if (baseUrl.endsWith("/v1")) {
+            mlServiceUrl = baseUrl;
+        } else {
+            mlServiceUrl = baseUrl.endsWith("/") ? baseUrl + "v1" : baseUrl + "/v1";
+        }
+        log.info("ML Service URL resolved to: {}", mlServiceUrl);
+    }
 
     public PlanResponseDto requestPlan(PlanRequestDto req) {
         return restTemplate.postForObject(mlServiceUrl + "/plan", req, PlanResponseDto.class);
