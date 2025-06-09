@@ -1,0 +1,52 @@
+version: "3.9"
+
+services:
+  db:
+    image: postgres:14
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: portml
+      POSTGRES_USER: portml
+      POSTGRES_PASSWORD: portml
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U portml"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  ml-service:
+    build:
+      context: ./ml-service
+    ports:
+      - "8000:8000"
+    restart: unless-stopped
+
+  backend:
+    build:
+      context: ./portmanager-backend
+    ports:
+      - "8080:8080"
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://db:5432/portml
+      SPRING_DATASOURCE_USERNAME: portml
+      SPRING_DATASOURCE_PASSWORD: portml
+      ML_SERVICE_URL: http://ml-service:8000
+    depends_on:
+      db:
+        condition: service_healthy
+      ml-service:
+        condition: service_started
+    restart: unless-stopped
+
+  ui:
+    build:
+      context: ./portmanager-ui
+    ports:
+      - "8082:8080"
+    depends_on:
+      - backend
+
+volumes:
+  pgdata:

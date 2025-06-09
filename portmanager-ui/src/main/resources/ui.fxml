@@ -1,0 +1,88 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.layout.*?>
+<?import javafx.scene.control.*?>
+
+<BorderPane fx:controller="com.portmanager.ui.AppController"
+            xmlns:fx="http://javafx.com/fxml">
+
+    <top>
+        <ToolBar>
+            <Label fx:id="planInfoLabel" text="ID: -, Алгоритм: -" style="-fx-font-weight: bold;" />
+            <Label text="Type of cargo:"/>
+            <ComboBox fx:id="cargoSelector"/>
+
+            <Label text="Priority:"/>
+            <ComboBox fx:id="prioritySelector"/>
+
+            <Label text="Terminals off:"/>
+            <CheckBox fx:id="disableT1" text="T1"/>
+            <CheckBox fx:id="disableT2" text="T2"/>
+
+            <Label text="Algorithm:"/>
+            <ComboBox fx:id="algorithmSelector"/>
+            <Button text="Refresh Plan" onAction="#onRefreshPlan"/>
+            <Button text="Compare Plans" onAction="#onComparePlans"/>
+            <HBox spacing="20" alignment="CENTER">
+                <Button fx:id="acceptButton" text="Accept Plan" onAction="#onAcceptPlan" visible="false"/>
+                <Button fx:id="rejectButton" text="Reject Plan" onAction="#onRejectPlan" visible="false"/>
+            </HBox>
+
+        </ToolBar>
+    </top>
+
+    <center>
+        <TabPane fx:id="scheduleTabs">
+            <Tab text="Current plan">
+                <VBox spacing="10" style="-fx-padding:10;">
+                    <HBox spacing="20">
+                        <Label fx:id="totalLabel" text="Total number of ships: -" />
+                        <Label fx:id="delayedLabel" text="Detained: -" />
+                        <Label fx:id="utilLabel" text="Loading terminals: -" />
+                    </HBox>
+                    <ScrollPane fitToWidth="true" fitToHeight="true">
+                        <GridPane fx:id="planGrid" hgap="5" vgap="5" />
+                    </ScrollPane>
+                </VBox>
+            </Tab>
+
+            <Tab text="Comparison of plans">
+                <VBox spacing="10" style="-fx-padding:10;">
+                    <HBox spacing="10">
+                        <VBox>
+                            <Label text="Plan A"/>
+                            <HBox spacing="10">
+                                <Label fx:id="aTotal" text="Total: -" />
+                                <Label fx:id="aDelayed" text="Detained: -" />
+                                <Label fx:id="aUtil" text="Load: -" />
+                            </HBox>
+                            <ScrollPane fitToWidth="true" fitToHeight="true">
+                                <GridPane fx:id="planAGrid" hgap="5" vgap="5"/>
+                            </ScrollPane>
+                        </VBox>
+                        <VBox>
+                            <Label text="Plan B"/>
+                            <HBox spacing="10">
+                                <Label fx:id="bTotal" text="Total: -" />
+                                <Label fx:id="bDelayed" text="Detained: -" />
+                                <Label fx:id="bUtil" text="Load: -" />
+                            </HBox>
+                            <ScrollPane fitToWidth="true" fitToHeight="true">
+                                <GridPane fx:id="planBGrid" hgap="5" vgap="5"/>
+                            </ScrollPane>
+                        </VBox>
+                    </HBox>
+                    <HBox spacing="20" alignment="CENTER">
+                        <Button text="Choose A" onAction="#onChooseA"/>
+                        <Button text="Choose B" onAction="#onChooseB"/>
+                    </HBox>
+                </VBox>
+            </Tab>
+        </TabPane>
+    </center>
+
+    <bottom>
+        <Label fx:id="statusLabel" text="Ready" />
+    </bottom>
+
+</BorderPane>

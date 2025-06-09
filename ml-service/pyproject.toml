@@ -1,0 +1,18 @@
+[project]
+name = "portmanager-ml"
+version = "0.1.0"
+description = "Demo ML service for berth allocation planning"
+requires-python = ">=3.10"
+
+[project.dependencies]
+fastapi = "^0.111"
+uvicorn = {extras=["standard"], version="^0.30"}
+pydantic = "^2.7"
+scikit-learn = "^1.5"
+numpy = "^1.26"
+
+[tool.setuptools.packages.find]
+where = ["app"]
+
+[project.optional-dependencies]
+test = ["pytest", "pytest-cov", "requests"]
