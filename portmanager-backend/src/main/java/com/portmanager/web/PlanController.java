@@ -29,37 +29,37 @@ public class PlanController {
     private final FeedbackService feedbackService;
     private final MlServiceClient mlClient;
 
-    /* -------- текущий план -------- */
+    /* -------- current plan -------- */
     @GetMapping("/plan/current")
     public ResponseEntity<PlanResponseDto> currentPlan() {
         var plan = planningService.getLastPlan();
         return plan == null ? ResponseEntity.noContent().build() : ResponseEntity.ok(plan);
     }
 
-    /* -------- построить новый -------- */
+    /* -------- build new plan -------- */
     @PostMapping("/plan")
     public PlanResponseDto generatePlan(@RequestParam(defaultValue = "baseline") String algorithm) {
         PlanningAlgorithm algoEnum = PlanningAlgorithm.fromString(algorithm);
         return planningService.generatePlan(algoEnum);
     }
 
-    /* -------- генерация демо‑данных -------- */
+    /* -------- generate new data -------- */
     @PostMapping("/data/generate")
     public ResponseEntity<Void> generateData(@RequestParam(defaultValue = "20") int ships) {
         generatorService.generate(ships);
         return ResponseEntity.ok().build();
     }
 
-    /* -------- сравнение двух планов -------- */
+    /* -------- compare 2 plans -------- */
     @GetMapping("/compare")
     public PairwiseRequestDto compare(@RequestParam(defaultValue = "baseline") String algoA,
-                                      @RequestParam(defaultValue = "RL")        String algoB) {
+                                      @RequestParam(defaultValue = "RL") String algoB) {
         return pairwiseService.buildComparison(
                 PlanningAlgorithm.fromString(algoA),
                 PlanningAlgorithm.fromString(algoB));
     }
 
-    /* -------- обратная связь -------- */
+    /* -------- feedback -------- */
     @PostMapping("/feedback")
     public ResponseEntity<Void> feedback(@RequestBody PairwiseFeedbackDto dto) {
         feedbackService.accept(dto);

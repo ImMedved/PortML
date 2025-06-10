@@ -47,8 +47,14 @@
                         <columns>
                             <TableColumn fx:id="arrivalColumn" text="Arrival Time"/>
                             <TableColumn fx:id="shipColumn" text="Vessel ID"/>
+                            <TableColumn fx:id="cargoColumn" text="Cargo Type"/>
+                            <TableColumn fx:id="priorityColumn" text="Priority"/>
+                            <TableColumn fx:id="lengthColumn" text="Length (m)"/>
+                            <TableColumn fx:id="draftColumn" text="Draft (m)"/>
+                            <TableColumn fx:id="durationColumn" text="Est. Duration (h)"/>
                         </columns>
                     </TableView>
+
                 </VBox>
             </Tab>
 

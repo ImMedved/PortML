@@ -21,7 +21,7 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class PlanningService {
 
-    private final ShipRepository shipRepo;                 // ← уже есть? иначе создайте
+    private final ShipRepository shipRepo;
     private final ScenarioGeneratorService generatorService;
 
     private final DataService dataService;
@@ -32,10 +32,9 @@ public class PlanningService {
 
     public PlanResponseDto generatePlan(com.portmanager.model.PlanningAlgorithm algorithm) {
 
-
         // ──► 1. если базм а пуста – генерируем 20
         if (shipRepo.count() == 0) {
-            generatorService.generate(20);                 // любое число больше 1
+            generatorService.generate(20);                 // n>1
         }
 
         PlanRequestDto req = PlanRequestDto.builder()
@@ -45,9 +44,20 @@ public class PlanningService {
                 .algorithm(algorithm)
                 .build();
 
-        PlanResponseDto resp = mlClient.requestPlan(req);
-        lastPlan = resp;
-        return resp;
+        PlanResponseDto mlResponse = mlClient.requestPlan(req);
+
+        List<ShipDto> ships = buildShipDtos(); // ← done upper
+
+        PlanResponseDto response = PlanResponseDto.builder()
+                .schedule(mlResponse.getSchedule())
+                .metrics(mlResponse.getMetrics())
+                .algorithmUsed(mlResponse.getAlgorithmUsed())
+                .scenarioId(mlResponse.getScenarioId())
+                .ships(ships)
+                .build();
+
+        lastPlan = response;
+        return response;
     }
 
     public PlanResponseDto getLastPlan() {

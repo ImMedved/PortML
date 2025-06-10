@@ -16,8 +16,7 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 /**
- * Контроллер JavaFX‑экрана. Содержит заглушки onAcceptPlan/onRejectPlan,
- * чтобы FXML успешно резолвил обработчики, даже если логика пока не нужна.
+ * JavaFX screen controller. Contains onAcceptPlan/onRejectPlan stubs
  */
 public class AppController {
 
@@ -59,11 +58,15 @@ public class AppController {
     @FXML private TableColumn<ShipRow, String> shipColumn;
     @FXML private TableColumn<ShipRow, String> arrivalColumn;
 
+    @FXML private TableColumn<ShipRow, String> cargoColumn;
+    @FXML private TableColumn<ShipRow, String> priorityColumn;
+    @FXML private TableColumn<ShipRow, String> lengthColumn;
+
     private PlanResponse lastSinglePlan;
     // Stubs - required only for correct parsing of ui.fxml
     @FXML
     private void onAcceptPlan() {
-        // В демо‑версии логика не нужна. Оставляем no‑op.
+        // Demo
         statusLabel.setText("The plan has been adopted (no‑op)");
     }
 
@@ -90,10 +93,14 @@ public class AppController {
         shipColumn.setCellValueFactory(data -> new SimpleStringProperty(data.getValue().getVesselId()));
         arrivalColumn.setCellValueFactory(data -> new SimpleStringProperty(data.getValue().getArrivalTime()));
 
+        cargoColumn.setCellValueFactory(data -> new SimpleStringProperty(data.getValue().getCargoType()));
+        priorityColumn.setCellValueFactory(data -> new SimpleStringProperty(data.getValue().getPriority()));
+        lengthColumn.setCellValueFactory(data -> new SimpleStringProperty(data.getValue().getLength()));
+
         shipTable.setOnMouseClicked(event -> {
             ShipRow selected = shipTable.getSelectionModel().getSelectedItem();
             if (selected != null) {
-                ShipInfoDialog.show(selected);
+                ShipInfoDialog.show(selected.getDto());
             }
         });
     }
@@ -113,7 +120,7 @@ public class AppController {
             renderMetrics(lastSinglePlan.getMetrics(), totalLabel, delayedLabel, utilLabel);
             planInfoLabel.setText("Scenario #" + lastSinglePlan.getScenarioId() +
                     " \u00B7 Algorithm: " + lastSinglePlan.getAlgorithmUsed());
-            setStatus("Готово");
+            setStatus("Ready");
         } else {
             showError("Error", "Failed to get plan from server.");
             setStatus("Error while getting plan.");
@@ -135,9 +142,9 @@ public class AppController {
             renderMetrics(currentPair.getPlanA().getMetrics(), aTotal, aDelayed, aUtil);
             renderMetrics(currentPair.getPlanB().getMetrics(), bTotal, bDelayed, bUtil);
             scheduleTabs.getSelectionModel().select(1);
-            statusLabel.setText("Планы загружены");
+            statusLabel.setText("Plans loaded");
         } else {
-            statusLabel.setText("Ошибка загрузки сравнительных планов");
+            statusLabel.setText("Error in loading plans");
         }
     }
 
@@ -145,7 +152,7 @@ public class AppController {
     private void onChooseA() {
         if (currentPair != null) {
             backendClient.sendFeedback(currentPair.getComparisonId(), "A");
-            statusLabel.setText("Выбран план A");
+            statusLabel.setText("Plan A chosen");
         }
     }
 
@@ -153,7 +160,7 @@ public class AppController {
     private void onChooseB() {
         if (currentPair != null) {
             backendClient.sendFeedback(currentPair.getComparisonId(), "B");
-            statusLabel.setText("Выбран план B");
+            statusLabel.setText("Plan B chosen");
         }
     }
 
@@ -166,7 +173,7 @@ public class AppController {
 
         planGrid.getChildren().clear();
 
-        // Сбор уникальных терминалов и временных отметок
+        // Gather terminals and timestamps
         Set<Integer> terminals = new TreeSet<>();
         Set<OffsetDateTime> timeline = new TreeSet<>();
 
@@ -179,16 +186,16 @@ public class AppController {
         List<Integer> termList = new ArrayList<>(terminals);
         List<OffsetDateTime> tLine = new ArrayList<>(timeline);
 
-        // Заголовок времени
+        // Time heading
         for (int col = 0; col < tLine.size(); col++) {
             planGrid.add(new Label(tLine.get(col).toLocalTime().toString()), col + 1, 0);
         }
-        // Заголовок терминалов
+        // Terminals heading
         for (int row = 0; row < termList.size(); row++) {
             planGrid.add(new Label(String.valueOf(termList.get(row))), 0, row + 1);
         }
 
-        // Блоки судов
+        // Vessels block
         for (ScheduleEntry e : plan.getSchedule()) {
             int row = termList.indexOf(e.getTerminalId()) + 1;
 
@@ -206,14 +213,13 @@ public class AppController {
 
             planGrid.add(block, colStart, row, span, 1);
         }
-        List<ShipRow> ships = plan.getSchedule().stream()
-                .map(assignment -> new ShipRow(
-                        assignment.getVesselId(),
-                        assignment.getStartTime().split("T")[0] + " " +
-                                assignment.getStartTime().split("T")[1].substring(0, 5)
-                ))
+        List<ShipRow> ships = plan.getShips().stream()
+                .map(ShipRow::new)
+                .sorted(Comparator.comparing(s -> s.getDto().getArrivalTime())) // date sort
                 .collect(Collectors.toList());
+
         shipTable.getItems().setAll(ships);
+
     }
 
     private void renderPlanToGrid(PlanResponse plan, GridPane target) {
@@ -255,13 +261,13 @@ public class AppController {
     }
 
     private void renderMetrics(Metrics m, Label total, Label delayed, Label util) {
-        total.setText("Всего судов: " + m.getTotalVessels());
-        delayed.setText("Задержано: -"); // точных данных нет
-        util.setText("Средняя загрузка: " + String.format("%.1f%%", m.getOverallUtilization() * 100));
+        total.setText("Total vessels: " + m.getTotalVessels());
+        delayed.setText("Loaded: -"); // точных данных нет
+        util.setText("Avg time to load: " + String.format("%.1f%%", m.getOverallUtilization() * 100));
     }
 
     private void setStatus(String msg) {
-        statusLabel.setText("[Порт] " + msg);
+        statusLabel.setText("[Port] " + msg);
     }
 
     private void showError(String title, String message) {

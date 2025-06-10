@@ -7,7 +7,8 @@ import java.util.List;
 /**
  * PlanResponseDto
  *
- * Returned by ML service and forwarded to UI. Contains the full schedule and KPI metrics.
+ * Returned by ML service and forwarded to UI. Contains the full schedule and KPI metrics.,
+ * And ship list
  */
 @Data
 @NoArgsConstructor
@@ -25,4 +26,7 @@ public class PlanResponseDto {
     private com.portmanager.model.PlanningAlgorithm algorithmUsed;
 
     private Integer scenarioId;
+    
+    @NotNull
+    private List<ShipDto> ships;
 }

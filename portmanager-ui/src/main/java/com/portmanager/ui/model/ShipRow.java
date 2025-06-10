@@ -1,21 +1,35 @@
 package com.portmanager.ui.model;
 
-import javafx.beans.property.SimpleStringProperty;
+import java.util.Map;
 
 public class ShipRow {
-    private final SimpleStringProperty vesselId;
-    private final SimpleStringProperty arrivalTime;
+    private final ShipDto dto;
 
-    public ShipRow(String id, String arrival) {
-        this.vesselId = new SimpleStringProperty(id);
-        this.arrivalTime = new SimpleStringProperty(arrival);
+    public ShipRow(Map<String, Object> json) {
+        this.dto = ShipDto.fromJson(json);
+    }
+
+    public ShipDto getDto() {
+        return dto;
     }
 
     public String getVesselId() {
-        return vesselId.get();
+        return dto.getId();
     }
 
     public String getArrivalTime() {
-        return arrivalTime.get();
+        return dto.getArrivalTime();
+    }
+
+    public String getCargoType() {
+        return dto.getCargoType();
+    }
+
+    public String getPriority() {
+        return dto.getPriority();
+    }
+
+    public String getLength() {
+        return String.valueOf(dto.getLength());
     }
 }
