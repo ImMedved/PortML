@@ -30,7 +30,7 @@ public class ScenarioGeneratorService {
 
     /** Вызывается при старте приложения (см. @PostConstruct). */
     public void generateDefault() {
-        generate(12);     // 12 судов, 3 терминала – можно отрегулировать
+        generate(50);     // 12 судов, 3 терминала – можно отрегулировать
     }
 
     @Transactional

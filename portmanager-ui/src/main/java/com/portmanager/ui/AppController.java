@@ -2,6 +2,7 @@ package com.portmanager.ui;
 
 import com.portmanager.ui.model.*;
 import com.portmanager.ui.service.BackendClient;
+import javafx.beans.property.SimpleStringProperty;
 import javafx.fxml.FXML;
 import javafx.scene.control.*;
 import javafx.scene.layout.*;
@@ -12,6 +13,8 @@ import java.time.LocalDateTime;
 import java.time.OffsetDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
+import java.util.stream.Collectors;
+
 /**
  * Контроллер JavaFX‑экрана. Содержит заглушки onAcceptPlan/onRejectPlan,
  * чтобы FXML успешно резолвил обработчики, даже если логика пока не нужна.
@@ -52,6 +55,10 @@ public class AppController {
     @FXML private Button rejectButton;
     @FXML private Label planInfoLabel;
 
+    @FXML private TableView<ShipRow> shipTable;
+    @FXML private TableColumn<ShipRow, String> shipColumn;
+    @FXML private TableColumn<ShipRow, String> arrivalColumn;
+
     private PlanResponse lastSinglePlan;
     // Stubs - required only for correct parsing of ui.fxml
     @FXML
@@ -79,6 +86,16 @@ public class AppController {
 
         prioritySelector.getItems().addAll("normal", "high", "critical");
         prioritySelector.setValue("normal");
+
+        shipColumn.setCellValueFactory(data -> new SimpleStringProperty(data.getValue().getVesselId()));
+        arrivalColumn.setCellValueFactory(data -> new SimpleStringProperty(data.getValue().getArrivalTime()));
+
+        shipTable.setOnMouseClicked(event -> {
+            ShipRow selected = shipTable.getSelectionModel().getSelectedItem();
+            if (selected != null) {
+                ShipInfoDialog.show(selected);
+            }
+        });
     }
 
     @FXML
@@ -189,6 +206,14 @@ public class AppController {
 
             planGrid.add(block, colStart, row, span, 1);
         }
+        List<ShipRow> ships = plan.getSchedule().stream()
+                .map(assignment -> new ShipRow(
+                        assignment.getVesselId(),
+                        assignment.getStartTime().split("T")[0] + " " +
+                                assignment.getStartTime().split("T")[1].substring(0, 5)
+                ))
+                .collect(Collectors.toList());
+        shipTable.getItems().setAll(ships);
     }
 
     private void renderPlanToGrid(PlanResponse plan, GridPane target) {

@@ -43,6 +43,12 @@
                     <ScrollPane fitToWidth="true" fitToHeight="true">
                         <GridPane fx:id="planGrid" hgap="5" vgap="5" />
                     </ScrollPane>
+                    <TableView fx:id="shipTable" prefHeight="250">
+                        <columns>
+                            <TableColumn fx:id="arrivalColumn" text="Arrival Time"/>
+                            <TableColumn fx:id="shipColumn" text="Vessel ID"/>
+                        </columns>
+                    </TableView>
                 </VBox>
             </Tab>
 
