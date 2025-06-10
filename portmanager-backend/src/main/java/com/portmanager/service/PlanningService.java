@@ -54,6 +54,8 @@ public class PlanningService {
                 .algorithmUsed(mlResponse.getAlgorithmUsed())
                 .scenarioId(mlResponse.getScenarioId())
                 .ships(ships)
+                .terminalClosures(req.getConditions().getTerminalClosures())
+                .weatherEvents(req.getConditions().getWeatherEvents())
                 .build();
 
         lastPlan = response;
@@ -104,4 +106,10 @@ public class PlanningService {
                 .build();
     }
 
+    public ConditionsDto getCurrentConditions() {
+        return ConditionsDto.builder()
+                .terminalClosures(buildConditionsDto().getTerminalClosures())
+                .weatherEvents(buildConditionsDto().getWeatherEvents())
+                .build();
+    }
 }

@@ -62,6 +62,11 @@ public class AppController {
     @FXML private TableColumn<ShipRow, String> priorityColumn;
     @FXML private TableColumn<ShipRow, String> lengthColumn;
 
+    @FXML private VBox conditionsBox;
+    @FXML private Label weatherLabel;
+    @FXML private Label closuresLabel;
+
+
     private PlanResponse lastSinglePlan;
     // Stubs - required only for correct parsing of ui.fxml
     @FXML
@@ -92,7 +97,6 @@ public class AppController {
 
         shipColumn.setCellValueFactory(data -> new SimpleStringProperty(data.getValue().getVesselId()));
         arrivalColumn.setCellValueFactory(data -> new SimpleStringProperty(data.getValue().getArrivalTime()));
-
         cargoColumn.setCellValueFactory(data -> new SimpleStringProperty(data.getValue().getCargoType()));
         priorityColumn.setCellValueFactory(data -> new SimpleStringProperty(data.getValue().getPriority()));
         lengthColumn.setCellValueFactory(data -> new SimpleStringProperty(data.getValue().getLength()));
@@ -131,8 +135,8 @@ public class AppController {
     private void onComparePlans() {
         planAGrid.getChildren().clear();
         planBGrid.getChildren().clear();
-        aTotal.setText("Всего: -");
-        bTotal.setText("Всего: -");
+        aTotal.setText("Total: -");
+        bTotal.setText("Total: -");
 
         Optional<PairwiseRequest> response = backendClient.getPairwisePlans();
         if (response.isPresent()) {
@@ -219,6 +223,25 @@ public class AppController {
                 .collect(Collectors.toList());
 
         shipTable.getItems().setAll(ships);
+        Conditions conditions = plan.getConditions();
+        if (conditions != null) {
+            StringBuilder weatherText = new StringBuilder("Weather Events:\n");
+            for (WeatherEvent e : conditions.getWeatherEvents()) {
+                weatherText.append(String.format("- %s: %s at %s\n",
+                        e.getType(), e.getDescription(), e.getStart()));
+            }
+            weatherLabel.setText(weatherText.toString());
+
+            StringBuilder closuresText = new StringBuilder("Terminal Closures:\n");
+            for (TerminalClosure c : conditions.getTerminalClosures()) {
+                closuresText.append(String.format("- %s: %s → %s (%s)\n",
+                        c.getTerminalId(), c.getStart(), c.getEnd(), c.getReason()));
+            }
+            closuresLabel.setText(closuresText.toString());
+        } else {
+            weatherLabel.setText("Weather Events: none");
+            closuresLabel.setText("Terminal Closures: none");
+        }
 
     }
 
@@ -276,5 +299,25 @@ public class AppController {
         alert.setHeaderText(null);
         alert.setContentText(message);
         alert.showAndWait();
+    }
+
+    public void showConditions(Conditions cond) {
+        conditionsBox.getChildren().clear();
+
+        Label weatherTitle = new Label("Weather Events:");
+        conditionsBox.getChildren().add(weatherTitle);
+
+        for (WeatherEvent we : cond.getWeatherEvents()) {
+            Label l = new Label(we.getStart() + " — " + we.getEnd() + ": " + we.getDescription());
+            conditionsBox.getChildren().add(l);
+        }
+
+        Label closureTitle = new Label("Terminal Closures:");
+        conditionsBox.getChildren().add(closureTitle);
+
+        for (TerminalClosure tc : cond.getTerminalClosures()) {
+            Label l = new Label("Terminal " + tc.getTerminalId() + " [" + tc.getStart() + " — " + tc.getEnd() + "]: " + tc.getReason());
+            conditionsBox.getChildren().add(l);
+        }
     }
 }

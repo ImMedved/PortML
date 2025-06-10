@@ -8,8 +8,11 @@ public class PlanResponse {
     private String algorithmUsed;
     private List<ScheduleEntry> schedule;
     private Metrics metrics;
+    private List<TerminalClosure> terminalClosures;
+    private List<WeatherEvent> weatherEvents;
+    private Conditions conditions;
 
-    private List<Map<String, Object>> ships;     // ← list of filled JSON-vessel objects
+    private List<Map<String, Object>> ships;     // list of filled JSON-vessel objects
 
     public Integer getScenarioId() { return scenarioId; }
 
@@ -25,5 +28,8 @@ public class PlanResponse {
 
     public List<Map<String, Object>> getShips() {
         return ships;
+    }
+    public Conditions getConditions() {
+        return conditions;
     }
 }

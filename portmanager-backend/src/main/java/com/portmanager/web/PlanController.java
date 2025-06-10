@@ -1,6 +1,7 @@
 package com.portmanager.web;
 
 import com.portmanager.client.MlServiceClient;
+import com.portmanager.dto.ConditionsDto;
 import com.portmanager.dto.PairwiseFeedbackDto;
 import com.portmanager.dto.PairwiseRequestDto;
 import com.portmanager.dto.PlanResponseDto;
@@ -72,4 +73,10 @@ public class PlanController {
         mlClient.train();
         return ResponseEntity.ok().build();
     }
+
+    @GetMapping("/conditions")
+    public ConditionsDto getConditions() {
+        return planningService.getCurrentConditions(); // метод нужно реализовать
+    }
+
 }

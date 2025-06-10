@@ -64,4 +64,20 @@ public class BackendClient {
             System.err.println("Error sending feedback: " + e.getMessage());
         }
     }
+
+    public Optional<Conditions> getConditions() {
+        try {
+            HttpRequest request = HttpRequest.newBuilder()
+                    .uri(URI.create(BASE_URL + "/conditions"))
+                    .GET()
+                    .build();
+
+            HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
+            return Optional.of(gson.fromJson(response.body(), Conditions.class));
+        } catch (IOException | InterruptedException e) {
+            System.err.println("Error while getting conditions: " + e.getMessage());
+            return Optional.empty();
+        }
+    }
+
 }

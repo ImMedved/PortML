@@ -43,18 +43,25 @@
                     <ScrollPane fitToWidth="true" fitToHeight="true">
                         <GridPane fx:id="planGrid" hgap="5" vgap="5" />
                     </ScrollPane>
-                    <TableView fx:id="shipTable" prefHeight="250">
-                        <columns>
-                            <TableColumn fx:id="arrivalColumn" text="Arrival Time"/>
-                            <TableColumn fx:id="shipColumn" text="Vessel ID"/>
-                            <TableColumn fx:id="cargoColumn" text="Cargo Type"/>
-                            <TableColumn fx:id="priorityColumn" text="Priority"/>
-                            <TableColumn fx:id="lengthColumn" text="Length (m)"/>
-                            <TableColumn fx:id="draftColumn" text="Draft (m)"/>
-                            <TableColumn fx:id="durationColumn" text="Est. Duration (h)"/>
-                        </columns>
-                    </TableView>
-
+                    <HBox spacing="10">
+                        <VBox spacing="10">
+                            <TableView fx:id="shipTable" prefHeight="250">
+                                <columns>
+                                    <TableColumn fx:id="arrivalColumn" text="Arrival Time"/>
+                                    <TableColumn fx:id="shipColumn" text="Vessel ID"/>
+                                    <TableColumn fx:id="cargoColumn" text="Cargo Type"/>
+                                    <TableColumn fx:id="priorityColumn" text="Priority"/>
+                                    <TableColumn fx:id="lengthColumn" text="Length (m)"/>
+                                    <TableColumn fx:id="draftColumn" text="Draft (m)"/>
+                                    <TableColumn fx:id="durationColumn" text="Est. Duration (h)"/>
+                                </columns>
+                            </TableView>
+                        </VBox>
+                        <VBox fx:id="conditionsBox" spacing="10" prefWidth="400">
+                            <Label fx:id="weatherLabel" text="Weather Events"/>
+                            <Label fx:id="closuresLabel" text="Terminal Closures"/>
+                        </VBox>
+                    </HBox>
                 </VBox>
             </Tab>
 

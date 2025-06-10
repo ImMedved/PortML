@@ -15,6 +15,8 @@ import java.util.List;
 @AllArgsConstructor
 @Builder
 public class PlanResponseDto {
+    private List<TerminalClosureDto> terminalClosures;
+    private List<WeatherEventDto> weatherEvents;
 
     @NotNull
     private List<AssignmentDto> schedule;
@@ -26,7 +28,7 @@ public class PlanResponseDto {
     private com.portmanager.model.PlanningAlgorithm algorithmUsed;
 
     private Integer scenarioId;
-    
+
     @NotNull
     private List<ShipDto> ships;
 }
