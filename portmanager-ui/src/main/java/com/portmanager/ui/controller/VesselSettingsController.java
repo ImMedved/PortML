@@ -21,6 +21,8 @@ public class VesselSettingsController implements SettingsResult<ShipDto> {
     @FXML private TableColumn<ShipDto, Double> lengthColumn;
     @FXML private TableColumn<ShipDto, Double> draftColumn;
     @FXML private TableColumn<ShipDto, String> cargoColumn;
+    @FXML private TableColumn<ShipDto, LocalDateTime> arrivalColumn;
+    @FXML private TableColumn<ShipDto, String> durationColumn;
 
     private final ObservableList<ShipDto> shipList = FXCollections.observableArrayList();
 
@@ -34,6 +36,8 @@ public class VesselSettingsController implements SettingsResult<ShipDto> {
         lengthColumn.setCellValueFactory(d -> new ReadOnlyObjectWrapper<>(d.getValue().getLength()));
         draftColumn.setCellValueFactory(d -> new ReadOnlyObjectWrapper<>(d.getValue().getDraft()));
         cargoColumn.setCellValueFactory(d -> new ReadOnlyObjectWrapper<>(d.getValue().getCargoType()));
+        arrivalColumn.setCellValueFactory(d -> new ReadOnlyObjectWrapper<>(d.getValue().getArrival()));
+        durationColumn.setCellValueFactory(d -> new ReadOnlyObjectWrapper<>(String.valueOf(d.getValue().getEstDurationHours())));
 
         idColumn.setCellFactory(TextFieldTableCell.forTableColumn());
         idColumn.setOnEditCommit(e -> e.getRowValue().setId(e.getNewValue()));
@@ -46,6 +50,12 @@ public class VesselSettingsController implements SettingsResult<ShipDto> {
 
         cargoColumn.setCellFactory(ComboBoxTableCell.forTableColumn(FXCollections.observableArrayList(CARGO_TYPES)));
         cargoColumn.setOnEditCommit(e -> e.getRowValue().setCargoType(e.getNewValue()));
+
+        arrivalColumn.setCellFactory(TextFieldTableCell.forTableColumn(new DateTimeStringConverter()));
+        arrivalColumn.setOnEditCommit(e -> e.getRowValue().setArrival(e.getNewValue()));
+
+        durationColumn.setCellFactory(TextFieldTableCell.forTableColumn());
+        durationColumn.setOnEditCommit(e -> e.getRowValue().setEstDurationHours(Double.parseDouble(e.getNewValue())));
 
         shipTable.setItems(shipList);
     }

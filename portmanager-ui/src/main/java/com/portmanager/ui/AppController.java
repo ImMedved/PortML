@@ -1,10 +1,8 @@
 package com.portmanager.ui;
 
-import com.portmanager.ui.controller.EventsSettingsController;
-import com.portmanager.ui.controller.SettingsResult;
-import com.portmanager.ui.controller.TerminalSettingsController;
-import com.portmanager.ui.controller.VesselSettingsController;
+import com.portmanager.ui.controller.*;
 import com.portmanager.ui.model.*;
+import com.portmanager.ui.net.RestClient;
 import com.portmanager.ui.service.BackendClient;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.fxml.FXML;
@@ -20,6 +18,8 @@ import java.util.*;
 
 public class AppController {
 
+    private final RestClient api = new RestClient("http://localhost:8080/api");
+
     @FXML private ComboBox<String> algorithmSelector;
     @FXML private GridPane planGrid;
     @FXML private Label totalLabel, delayedLabel, utilLabel, planInfoLabel, statusLabel;
@@ -28,6 +28,7 @@ public class AppController {
     @FXML private VBox conditionsBox;
     @FXML private Label weatherLabel, closuresLabel;
     @FXML private Label terminalCount, vesselCount, eventCount;
+    @FXML private ScheduleController scheduleController;
 
     private final BackendClient backendClient = new BackendClient();
     private PlanResponse lastPlan;
@@ -81,6 +82,23 @@ public class AppController {
     }
 
     @FXML
+    private void onGeneratePlan() {
+        ConditionsDto dto = new ConditionsDto(manualTerminals, manualShips, manualEvents);
+        PlanResponseDto plan = api.post("/plan", dto, PlanResponseDto.class);
+        scheduleController.renderPlan(plan);
+    }
+
+    @FXML
+    private void onRandomData() {
+        api.post("/data/generate?ships=20", null, Void.class);
+        ConditionsDto dto = api.get("/conditions", ConditionsDto.class);
+        manualTerminals = dto.terminals();
+        manualShips = dto.ships();
+        manualEvents = dto.events();
+        scheduleController.renderConditions(dto);
+    }
+
+    @FXML
     private void onRefreshPlan() {
         setStatus("Getting a plan...");
         planGrid.getChildren().clear();
@@ -102,6 +120,7 @@ public class AppController {
     private void openTerminalSettings() {
         manualTerminals = openSettingsDialog("/terminal_settings.fxml", manualTerminals);
         terminalCount.setText(String.valueOf(manualTerminals.size()));
+        scheduleController.showTerminalCount(manualTerminals.size());
     }
 
     @FXML
@@ -114,6 +133,7 @@ public class AppController {
     private void openEventsSettings() {
         manualEvents = openSettingsDialog("/events_settings.fxml", manualEvents);
         eventCount.setText(String.valueOf(manualEvents.size()));
+        scheduleController.markClosures(manualEvents);
     }
 
     private <T> List<T> openSettingsDialog(String fxmlPath, List<T> initial) {

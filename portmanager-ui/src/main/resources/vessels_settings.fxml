@@ -14,6 +14,8 @@
                 <TableColumn fx:id="idColumn" text="ID"/>
                 <TableColumn fx:id="lengthColumn" text="Length"/>
                 <TableColumn fx:id="draftColumn" text="Draft"/>
+                <TableColumn fx:id="arrivalColumn" text="Arrival"/>
+                <TableColumn fx:id="durationColumn" text="Hours"/>
                 <TableColumn fx:id="cargoColumn" text="Cargo Type"/>
             </columns>
         </TableView>

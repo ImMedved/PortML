@@ -13,6 +13,7 @@ public class EventDto {
     private LocalDateTime start;
     private LocalDateTime end;
     private String description;
+    private String terminalId;
 
     public EventDto() {}
 
@@ -34,4 +35,12 @@ public class EventDto {
 
     public String getDescription() { return description; }
     public void setDescription(String description) { this.description = description; }
+
+    public String getTerminalId() {
+        return terminalId;
+    }
+
+    public void setTerminalId(String terminalId) {
+        this.terminalId = terminalId;
+    }
 }

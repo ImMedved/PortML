@@ -22,6 +22,7 @@ public class EventsSettingsController implements SettingsResult<EventDto> {
     @FXML private TableColumn<EventDto, LocalDateTime> startColumn;
     @FXML private TableColumn<EventDto, LocalDateTime> endColumn;
     @FXML private TableColumn<EventDto, String> descriptionColumn;
+    @FXML private TableColumn<EventDto, String> terminalIdColumn;
 
     private final ObservableList<EventDto> eventList = FXCollections.observableArrayList();
 
@@ -32,6 +33,7 @@ public class EventsSettingsController implements SettingsResult<EventDto> {
         typeColumn.setCellValueFactory(d -> new ReadOnlyObjectWrapper<>(d.getValue().getType()));
         startColumn.setCellValueFactory(d -> new ReadOnlyObjectWrapper<>(d.getValue().getStart()));
         endColumn.setCellValueFactory(d -> new ReadOnlyObjectWrapper<>(d.getValue().getEnd()));
+        terminalIdColumn.setCellValueFactory(d -> new ReadOnlyObjectWrapper<>(d.getValue().getTerminalId()));
         descriptionColumn.setCellValueFactory(d -> new ReadOnlyObjectWrapper<>(d.getValue().getDescription()));
 
         typeColumn.setCellFactory(ComboBoxTableCell.forTableColumn(EventType.values()));
@@ -39,6 +41,14 @@ public class EventsSettingsController implements SettingsResult<EventDto> {
 
         descriptionColumn.setCellFactory(TextFieldTableCell.forTableColumn());
         descriptionColumn.setOnEditCommit(e -> e.getRowValue().setDescription(e.getNewValue()));
+
+        startColumn.setCellFactory(TextFieldTableCell.forTableColumn(new DateTimeStringConverter()));
+        startColumn.setOnEditCommit(e -> e.getRowValue().setStart(e.getNewValue()));
+        endColumn.setOnEditCommit(e -> e.getRowValue().setEnd(e.getNewValue()));
+        terminalIdColumn.setOnEditCommit(e -> e.getRowValue().setTerminalId(e.getNewValue()));
+
+        endColumn.setCellFactory(TextFieldTableCell.forTableColumn(new DateTimeStringConverter()));
+        terminalIdColumn.setCellFactory(TextFieldTableCell.forTableColumn());
 
         eventTable.setItems(eventList);
     }

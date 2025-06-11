@@ -12,6 +12,7 @@
                 <TableColumn fx:id="typeColumn" text="Type"/>
                 <TableColumn fx:id="startColumn" text="Start Time"/>
                 <TableColumn fx:id="endColumn" text="End Time"/>
+                <TableColumn fx:id="terminalIdColumn" text="Terminal"/>
                 <TableColumn fx:id="descriptionColumn" text="Description"/>
             </columns>
         </TableView>
