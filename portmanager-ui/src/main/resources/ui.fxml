@@ -8,7 +8,7 @@
 
     <top>
         <ToolBar>
-            <Label fx:id="planInfoLabel" text="ID: -, Алгоритм: -" style="-fx-font-weight: bold;" />
+            <Label fx:id="planInfoLabel" text="ID: -, Algorithm: -" style="-fx-font-weight: bold;" />
             <Label text="Type of cargo:"/>
             <ComboBox fx:id="cargoSelector"/>
 
@@ -23,6 +23,8 @@
             <ComboBox fx:id="algorithmSelector"/>
             <Button text="Refresh Plan" onAction="#onRefreshPlan"/>
             <Button text="Compare Plans" onAction="#onComparePlans"/>
+            <Button text="Show last plan" onAction="#onShowLastPlan"/>
+
             <HBox spacing="20" alignment="CENTER">
                 <Button fx:id="acceptButton" text="Accept Plan" onAction="#onAcceptPlan" visible="false"/>
                 <Button fx:id="rejectButton" text="Reject Plan" onAction="#onRejectPlan" visible="false"/>

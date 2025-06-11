@@ -4,6 +4,7 @@ import com.portmanager.client.MlServiceClient;
 import com.portmanager.dto.*;
 import com.portmanager.entity.*;
 import com.portmanager.repository.ShipRepository;
+import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.modelmapper.ModelMapper;
@@ -28,11 +29,11 @@ public class PlanningService {
     private final MlServiceClient mlClient;
     private final ModelMapper mapper = new ModelMapper();  // quick mapper; configure later
 
+    @Getter
     private PlanResponseDto lastPlan;
 
     public PlanResponseDto generatePlan(com.portmanager.model.PlanningAlgorithm algorithm) {
 
-        // ──► 1. если базм а пуста – генерируем 20
         if (shipRepo.count() == 0) {
             generatorService.generate(20);                 // n>1
         }
@@ -62,11 +63,7 @@ public class PlanningService {
         return response;
     }
 
-    public PlanResponseDto getLastPlan() {
-        return lastPlan;
-    }
-
-    // --- helpers ------------------------------------------------------------
+    // helpers
     private PortDto buildPortDto() {
         List<TerminalDto> terminals = dataService.getAllTerminals().stream()
                 .map(t -> mapper.map(t, TerminalDto.class))

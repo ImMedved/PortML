@@ -11,7 +11,7 @@ import java.util.List;
 
 /**
  * DataService
- *
+ * <p>
  * Generates or fetches current scenario (terminals + ships + conditions).
  * For now: stub that loads everything already stored in DB; generator will be added later.
  */

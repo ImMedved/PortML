@@ -30,19 +30,17 @@ public class PlanController {
     private final FeedbackService feedbackService;
     private final MlServiceClient mlClient;
 
-    /* -------- current plan -------- */
-    @GetMapping("/plan/current")
-    public ResponseEntity<PlanResponseDto> currentPlan() {
-        var plan = planningService.getLastPlan();
-        return plan == null ? ResponseEntity.noContent().build() : ResponseEntity.ok(plan);
-    }
-
     /* -------- build new plan -------- */
     @PostMapping("/plan")
-    public PlanResponseDto generatePlan(@RequestParam(defaultValue = "baseline") String algorithm) {
+    public PlanResponseDto generatePlan(
+            @RequestParam(defaultValue = "baseline") String algorithm,
+            @RequestParam(defaultValue = "false") boolean disableT1,
+            @RequestParam(defaultValue = "false") boolean disableT2
+    ) {
         PlanningAlgorithm algoEnum = PlanningAlgorithm.fromString(algorithm);
-        return planningService.generatePlan(algoEnum);
+        return planningService.generatePlan(algoEnum, disableT1, disableT2);
     }
+
 
     /* -------- generate new data -------- */
     @PostMapping("/data/generate")
