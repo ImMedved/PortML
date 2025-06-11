@@ -9,10 +9,10 @@
 
         <TableView fx:id="eventTable" prefHeight="300">
             <columns>
-                <TableColumn fx:id="nameColumn" text="Name"/>
                 <TableColumn fx:id="typeColumn" text="Type"/>
                 <TableColumn fx:id="startColumn" text="Start Time"/>
                 <TableColumn fx:id="endColumn" text="End Time"/>
+                <TableColumn fx:id="descriptionColumn" text="Description"/>
             </columns>
         </TableView>
 

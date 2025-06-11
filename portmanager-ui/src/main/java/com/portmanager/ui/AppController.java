@@ -100,41 +100,46 @@ public class AppController {
 
     @FXML
     private void openTerminalSettings() {
-        manualTerminals = openSettingsDialog("/terminal_settings.fxml");
+        manualTerminals = openSettingsDialog("/terminal_settings.fxml", manualTerminals);
         terminalCount.setText(String.valueOf(manualTerminals.size()));
     }
 
     @FXML
     private void openVesselSettings() {
-        manualShips = openSettingsDialog("/vessels_settings.fxml");
+        manualShips = openSettingsDialog("/vessels_settings.fxml", manualShips);
         vesselCount.setText(String.valueOf(manualShips.size()));
     }
 
     @FXML
     private void openEventsSettings() {
-        manualEvents = openSettingsDialog("/events_settings.fxml");
+        manualEvents = openSettingsDialog("/events_settings.fxml", manualEvents);
         eventCount.setText(String.valueOf(manualEvents.size()));
     }
 
-    private <T> List<T> openSettingsDialog(String fxmlPath) {
+    private <T> List<T> openSettingsDialog(String fxmlPath, List<T> initial) {
         try {
             FXMLLoader loader = new FXMLLoader(getClass().getResource(fxmlPath));
             Parent root = loader.load();
+
+            SettingsResult<T> controller = loader.getController();
+            controller.setData(initial);
 
             Stage dialog = new Stage();
             dialog.setTitle("Settings");
             dialog.setScene(new Scene(root));
             dialog.showAndWait();
 
-            SettingsResult<T> controller = loader.getController();
             return controller.collectResult();
 
         } catch (IOException e) {
             e.printStackTrace();
-            return List.of();
+            return initial;
         }
     }
 
+    private <T> List<T> openSettingsDialog(String fxmlPath) {
+        return openSettingsDialog(fxmlPath, List.of());
+    }
 
     private void renderPlan(PlanResponse plan) {
         // render logic

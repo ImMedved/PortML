@@ -12,7 +12,6 @@
         <TableView fx:id="shipTable" prefHeight="300">
             <columns>
                 <TableColumn fx:id="idColumn" text="ID"/>
-                <TableColumn fx:id="nameColumn" text="Name"/>
                 <TableColumn fx:id="lengthColumn" text="Length"/>
                 <TableColumn fx:id="draftColumn" text="Draft"/>
                 <TableColumn fx:id="cargoColumn" text="Cargo Type"/>
