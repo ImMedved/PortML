@@ -3,11 +3,12 @@
 <?import javafx.scene.control.*?>
 <?import javafx.scene.layout.*?>
 
-<?import javafx.util.Callback?>
-<AnchorPane xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml"
+<AnchorPane xmlns="http://javafx.com/javafx/8"
+            xmlns:fx="http://javafx.com/fxml"
             fx:controller="com.portmanager.ui.controller.TerminalSettingsController">
 
-    <VBox spacing="10" prefWidth="600" prefHeight="400" AnchorPane.topAnchor="0" AnchorPane.bottomAnchor="0"
+    <VBox spacing="10" prefWidth="600" prefHeight="400"
+          AnchorPane.topAnchor="0" AnchorPane.bottomAnchor="0"
           AnchorPane.leftAnchor="0" AnchorPane.rightAnchor="0">
 
         <TableView fx:id="terminalTable" prefHeight="300">
@@ -17,32 +18,10 @@
                 <TableColumn fx:id="lengthColumn" text="Max Length"/>
                 <TableColumn fx:id="draftColumn" text="Max Draft"/>
                 <TableColumn fx:id="cargoColumn" text="Cargo Types"/>
-                <TableColumn text="Action">
-                    <cellFactory>
-                        <Callback fx:factory="lambda">
-                            <fx:script>
-                                import javafx.scene.control.Button;
-                                import javafx.scene.control.TableCell;
-                                (param) -> new TableCell() {
-                                final Button btn = new Button("Remove");
-                                {
-                                btn.setOnAction(e -> {
-                                getTableView().getItems().remove(getIndex());
-                                });
-                                }
-                                @Override public void updateItem(Object item, boolean empty) {
-                                super.updateItem(item, empty);
-                                if (empty) setGraphic(null); else setGraphic(btn);
-                                }
-                                }
-                            </fx:script>
-                        </Callback>
-                    </cellFactory>
-                </TableColumn>
             </columns>
         </TableView>
 
-        <HBox spacing="10">
+        <HBox spacing="10" alignment="CENTER_RIGHT">
             <Button text="Add Terminal" onAction="#onAddTerminal"/>
             <Button text="Confirm" onAction="#onConfirm"/>
         </HBox>

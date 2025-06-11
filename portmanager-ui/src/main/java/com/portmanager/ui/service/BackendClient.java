@@ -8,6 +8,7 @@ import java.net.URI;
 import java.net.URLEncoder;
 import java.net.http.*;
 import java.nio.charset.StandardCharsets;
+import java.util.List;
 import java.util.Optional;
 
 public class BackendClient {
@@ -65,17 +66,18 @@ public class BackendClient {
         }
     }
 
-    public Optional<Conditions> getConditions() {
+    public Optional<List<EventDto>> getEvents() {
         try {
             HttpRequest request = HttpRequest.newBuilder()
-                    .uri(URI.create(BASE_URL + "/conditions"))
+                    .uri(URI.create(BASE_URL + "/events"))
                     .GET()
                     .build();
 
             HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
-            return Optional.of(gson.fromJson(response.body(), Conditions.class));
+            EventDto[] events = gson.fromJson(response.body(), EventDto[].class);
+            return Optional.of(List.of(events));
         } catch (IOException | InterruptedException e) {
-            System.err.println("Error while getting conditions: " + e.getMessage());
+            System.err.println("Error while getting events: " + e.getMessage());
             return Optional.empty();
         }
     }

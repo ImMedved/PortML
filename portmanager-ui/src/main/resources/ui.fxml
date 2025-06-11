@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<?import javafx.scene.layout.*?>
 <?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
 
 <BorderPane fx:controller="com.portmanager.ui.AppController"
             xmlns:fx="http://javafx.com/fxml">
@@ -9,27 +9,28 @@
     <top>
         <ToolBar>
             <Label fx:id="planInfoLabel" text="ID: -, Algorithm: -" style="-fx-font-weight: bold;" />
-            <Label text="Type of cargo:"/>
-            <ComboBox fx:id="cargoSelector"/>
-
-            <Label text="Priority:"/>
-            <ComboBox fx:id="prioritySelector"/>
-
-            <Label text="Terminals off:"/>
-            <CheckBox fx:id="disableT1" text="T1"/>
-            <CheckBox fx:id="disableT2" text="T2"/>
 
             <Label text="Algorithm:"/>
             <ComboBox fx:id="algorithmSelector"/>
             <Button text="Refresh Plan" onAction="#onRefreshPlan"/>
             <Button text="Compare Plans" onAction="#onComparePlans"/>
-            <Button text="Show last plan" onAction="#onShowLastPlan"/>
+
+            <Button text="Edit Terminals" onAction="#openTerminalSettings"/>
+            <Button text="Edit Vessels" onAction="#openVesselSettings"/>
+            <Button text="Edit Events" onAction="#openEventsSettings"/>
+
+            <Label text="|"/>
+            <Label text="T:"/>
+            <Label fx:id="terminalCount" text="0"/>
+            <Label text=" V:"/>
+            <Label fx:id="vesselCount" text="0"/>
+            <Label text=" E:"/>
+            <Label fx:id="eventCount" text="0"/>
 
             <HBox spacing="20" alignment="CENTER">
                 <Button fx:id="acceptButton" text="Accept Plan" onAction="#onAcceptPlan" visible="false"/>
                 <Button fx:id="rejectButton" text="Reject Plan" onAction="#onRejectPlan" visible="false"/>
             </HBox>
-
         </ToolBar>
     </top>
 
@@ -105,5 +106,4 @@
     <bottom>
         <Label fx:id="statusLabel" text="Ready" />
     </bottom>
-
 </BorderPane>

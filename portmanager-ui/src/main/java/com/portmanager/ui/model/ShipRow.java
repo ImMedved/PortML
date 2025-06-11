@@ -18,7 +18,7 @@ public class ShipRow {
     }
 
     public String getArrivalTime() {
-        return dto.getArrivalTime();
+        return dto.getArrivalTime().toString();
     }
 
     public String getCargoType() {

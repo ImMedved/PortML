@@ -1,6 +1,8 @@
 package com.portmanager.ui.model;
 
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+import java.util.Map;
 
 public class ShipDto {
     private String id;
@@ -10,6 +12,18 @@ public class ShipDto {
     private String cargoType;
     private double estDurationHours;
     private String priority;
+
+    public static ShipDto fromJson(Map<String, Object> map) {
+        return new ShipDto(
+                (String) map.get("id"),
+                LocalDateTime.parse((String) map.get("arrivalTime"), DateTimeFormatter.ISO_DATE_TIME),
+                ((Number) map.get("length")).doubleValue(),
+                ((Number) map.get("draft")).doubleValue(),
+                (String) map.get("cargoType"),
+                ((Number) map.get("estDurationHours")).doubleValue(),
+                (String) map.get("priority")
+        );
+    }
 
     public ShipDto() {}
 
@@ -23,7 +37,6 @@ public class ShipDto {
         this.priority = priority;
     }
 
-    // Геттеры и сеттеры
     public String getId() { return id; }
     public void setId(String id) { this.id = id; }
 

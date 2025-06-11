@@ -2,60 +2,65 @@ package com.portmanager.ui.controller;
 
 import com.portmanager.ui.model.EventDto;
 import com.portmanager.ui.model.EventDto.EventType;
-import javafx.beans.property.ReadOnlyObjectWrapper;
-import javafx.collections.*;
+import javafx.collections.FXCollections;
+import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
 import javafx.scene.control.*;
+import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.stage.Stage;
 
 import java.time.LocalDateTime;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
 
-public class EventsSettingsController {
+public class EventsSettingsController implements SettingsResult<EventDto> {
 
-    @FXML private TableView<EventDto> eventTable;
-    @FXML private TableColumn<EventDto, EventType> typeColumn;
-    @FXML private TableColumn<EventDto, LocalDateTime> startColumn;
-    @FXML private TableColumn<EventDto, LocalDateTime> endColumn;
-    @FXML private TableColumn<EventDto, String> terminalColumn;
-    @FXML private TableColumn<EventDto, String> descriptionColumn;
+    @FXML
+    private TableView<EventDto> eventTable;
+    @FXML
+    private TableColumn<EventDto, EventType> typeColumn;
+    @FXML
+    private TableColumn<EventDto, LocalDateTime> startColumn;
+    @FXML
+    private TableColumn<EventDto, LocalDateTime> endColumn;
+    @FXML
+    private TableColumn<EventDto, String> descriptionColumn;
 
-    private final ObservableList<EventDto> events = FXCollections.observableArrayList();
+    private final ObservableList<EventDto> eventList = FXCollections.observableArrayList();
 
     @FXML
     public void initialize() {
-        eventTable.setItems(events);
+        typeColumn.setCellValueFactory(new PropertyValueFactory<>("type"));
+        startColumn.setCellValueFactory(new PropertyValueFactory<>("start"));
+        endColumn.setCellValueFactory(new PropertyValueFactory<>("end"));
+        descriptionColumn.setCellValueFactory(new PropertyValueFactory<>("description"));
 
-        typeColumn.setCellValueFactory(data -> new ReadOnlyObjectWrapper<>(data.getValue().getType()));
-        startColumn.setCellValueFactory(data -> new ReadOnlyObjectWrapper<>(data.getValue().getStart()));
-        endColumn.setCellValueFactory(data -> new ReadOnlyObjectWrapper<>(data.getValue().getEnd()));
-        terminalColumn.setCellValueFactory(data -> new ReadOnlyObjectWrapper<>(data.getValue().getTerminalId()));
-        descriptionColumn.setCellValueFactory(data -> new ReadOnlyObjectWrapper<>(data.getValue().getDescription()));
+        eventTable.setItems(eventList);
     }
 
     @FXML
     private void onAddEvent() {
-        EventDto event = new EventDto(
-                EventType.WEATHER,
-                LocalDateTime.now(),
-                LocalDateTime.now().plusHours(6),
-                null,
-                "Storm warning"
-        );
-        events.add(event);
+        EventDto newEvent = new EventDto(EventType.WEATHER, LocalDateTime.now(), LocalDateTime.now().plusHours(1), "Weather disturbance");
+        eventList.add(newEvent);
     }
 
     @FXML
     private void onConfirm() {
-        // TODO: validate, передать в основной контроллер
         ((Stage) eventTable.getScene().getWindow()).close();
     }
 
-    public List<EventDto> getEvents() {
-        return events;
+    @Override
+    public List<EventDto> getData() {
+        return List.of();
     }
 
-    public void setEvents(List<EventDto> initialData) {
-        events.setAll(initialData);
+    @Override
+    public void setData(List<EventDto> data) {
+        eventList.setAll(data);
+    }
+
+    @Override
+    public List<EventDto> collectResult() {
+        return new ArrayList<>(eventList);
     }
 }

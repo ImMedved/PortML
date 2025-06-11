@@ -2,15 +2,21 @@ package com.portmanager.ui.controller;
 
 import com.portmanager.ui.model.TerminalDto;
 import javafx.beans.property.ReadOnlyObjectWrapper;
-import javafx.collections.*;
+import javafx.collections.FXCollections;
+import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
 import javafx.scene.control.*;
 import javafx.scene.control.cell.TextFieldTableCell;
+import javafx.util.converter.DoubleStringConverter;
+import javafx.util.converter.IntegerStringConverter;
 import javafx.stage.Stage;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Random;
 
-public class TerminalSettingsController {
+public class TerminalSettingsController implements SettingsResult<TerminalDto> {
 
     @FXML private TableView<TerminalDto> terminalTable;
     @FXML private TableColumn<TerminalDto, Integer> idColumn;
@@ -19,7 +25,9 @@ public class TerminalSettingsController {
     @FXML private TableColumn<TerminalDto, Double> draftColumn;
     @FXML private TableColumn<TerminalDto, String> cargoColumn;
 
-    private ObservableList<TerminalDto> terminals = FXCollections.observableArrayList();
+    private final ObservableList<TerminalDto> terminals = FXCollections.observableArrayList();
+
+    private static final List<String> ALL_CARGO_TYPES = Arrays.asList("containers", "vehicles", "gas", "liquid", "bulk");
 
     @FXML
     public void initialize() {
@@ -29,20 +37,36 @@ public class TerminalSettingsController {
         nameColumn.setCellValueFactory(data -> new ReadOnlyObjectWrapper<>(data.getValue().getName()));
         lengthColumn.setCellValueFactory(data -> new ReadOnlyObjectWrapper<>(data.getValue().getMaxLength()));
         draftColumn.setCellValueFactory(data -> new ReadOnlyObjectWrapper<>(data.getValue().getMaxDraft()));
-        cargoColumn.setCellValueFactory(data -> new ReadOnlyObjectWrapper<>(String.join(",", data.getValue().getAllowedCargoTypes())));
+        cargoColumn.setCellValueFactory(data -> new ReadOnlyObjectWrapper<>(String.join(", ", data.getValue().getAllowedCargoTypes())));
 
         terminalTable.setEditable(true);
+
         nameColumn.setCellFactory(TextFieldTableCell.forTableColumn());
+        nameColumn.setOnEditCommit(event -> event.getRowValue().setName(event.getNewValue()));
+
+        lengthColumn.setCellFactory(TextFieldTableCell.forTableColumn(new DoubleStringConverter()));
+        lengthColumn.setOnEditCommit(event -> event.getRowValue().setMaxLength(event.getNewValue()));
+
+        draftColumn.setCellFactory(TextFieldTableCell.forTableColumn(new DoubleStringConverter()));
+        draftColumn.setOnEditCommit(event -> event.getRowValue().setMaxDraft(event.getNewValue()));
+
+        cargoColumn.setCellFactory(TextFieldTableCell.forTableColumn());
+        cargoColumn.setOnEditCommit(event -> {
+            List<String> values = new ArrayList<>();
+            for (String token : event.getNewValue().split(",")) {
+                String trimmed = token.trim().toLowerCase();
+                if (ALL_CARGO_TYPES.contains(trimmed)) {
+                    values.add(trimmed);
+                }
+            }
+            event.getRowValue().setAllowedCargoTypes(values);
+        });
     }
 
     @FXML
     private void onAddTerminal() {
         TerminalDto newTerminal = new TerminalDto(
-                generateRandomId(),
-                "New Terminal",
-                200.0,
-                10.0,
-                List.of("containers")
+                generateRandomId(), "New Terminal", 200.0, 10.0, List.of("containers")
         );
         terminals.add(newTerminal);
     }
@@ -50,25 +74,37 @@ public class TerminalSettingsController {
     @FXML
     private void onConfirm() {
         if (terminals.isEmpty()) {
-            Alert alert = new Alert(Alert.AlertType.ERROR, "At least one terminal must be defined.");
-            alert.showAndWait();
+            showError("At least one terminal must be defined.");
             return;
         }
-
-        // TODO: сохранить terminals куда-то или передать в родительский контроллер
-        ((Stage) terminalTable.getScene().getWindow()).close();
+        closeWindow();
     }
 
     private int generateRandomId() {
-        Random r = new Random();
-        return 1000 + r.nextInt(9000);
+        return 1000 + new Random().nextInt(9000);
     }
 
-    public List<TerminalDto> getTerminals() {
+    private void closeWindow() {
+        ((Stage) terminalTable.getScene().getWindow()).close();
+    }
+
+    private void showError(String msg) {
+        Alert alert = new Alert(Alert.AlertType.ERROR, msg);
+        alert.showAndWait();
+    }
+
+    @Override
+    public List<TerminalDto> getData() {
         return terminals;
     }
 
-    public void setTerminals(List<TerminalDto> initialData) {
+    @Override
+    public void setData(List<TerminalDto> initialData) {
         terminals.setAll(initialData);
+    }
+
+    @Override
+    public List<TerminalDto> collectResult() {
+        return new ArrayList<>(terminals);
     }
 }

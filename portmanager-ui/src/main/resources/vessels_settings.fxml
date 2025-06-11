@@ -3,48 +3,26 @@
 <?import javafx.scene.control.*?>
 <?import javafx.scene.layout.*?>
 
-<?import javafx.util.Callback?>
 <AnchorPane xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml"
             fx:controller="com.portmanager.ui.controller.VesselSettingsController">
-
-    <VBox spacing="10" prefWidth="900" prefHeight="450" AnchorPane.topAnchor="0" AnchorPane.bottomAnchor="0"
+    <VBox spacing="10" prefWidth="600" prefHeight="400"
+          AnchorPane.topAnchor="0" AnchorPane.bottomAnchor="0"
           AnchorPane.leftAnchor="0" AnchorPane.rightAnchor="0">
 
-        <TableView fx:id="vesselTable" prefHeight="350">
+        <TableView fx:id="shipTable" prefHeight="300">
             <columns>
                 <TableColumn fx:id="idColumn" text="ID"/>
-                <TableColumn fx:id="arrivalColumn" text="Arrival"/>
+                <TableColumn fx:id="nameColumn" text="Name"/>
                 <TableColumn fx:id="lengthColumn" text="Length"/>
                 <TableColumn fx:id="draftColumn" text="Draft"/>
-                <TableColumn fx:id="cargoColumn" text="Cargo"/>
-                <TableColumn fx:id="durationColumn" text="Duration"/>
-                <TableColumn fx:id="priorityColumn" text="Priority"/>
-                <TableColumn text="Action">
-                    <cellFactory>
-                        <Callback fx:factory="lambda">
-                            <fx:script>
-                                import javafx.scene.control.Button;
-                                import javafx.scene.control.TableCell;
-                                (param) -> new TableCell() {
-                                final Button btn = new Button("Remove");
-                                {
-                                btn.setOnAction(e -> getTableView().getItems().remove(getIndex()));
-                                }
-                                @Override public void updateItem(Object item, boolean empty) {
-                                super.updateItem(item, empty);
-                                setGraphic(empty ? null : btn);
-                                }
-                                }
-                            </fx:script>
-                        </Callback>
-                    </cellFactory>
-                </TableColumn>
+                <TableColumn fx:id="cargoColumn" text="Cargo Type"/>
             </columns>
         </TableView>
 
         <HBox spacing="10">
-            <Button text="Add Vessel" onAction="#onAddVessel"/>
+            <Button text="Add Vessel" onAction="#onAddShip"/>
             <Button text="Confirm" onAction="#onConfirm"/>
         </HBox>
+
     </VBox>
 </AnchorPane>

@@ -12,16 +12,14 @@ public class EventDto {
     private EventType type;
     private LocalDateTime start;
     private LocalDateTime end;
-    private String terminalId;   // nullable for WEATHER
     private String description;
 
     public EventDto() {}
 
-    public EventDto(EventType type, LocalDateTime start, LocalDateTime end, String terminalId, String description) {
+    public EventDto(EventType type, LocalDateTime start, LocalDateTime end, String description) {
         this.type = type;
         this.start = start;
         this.end = end;
-        this.terminalId = terminalId;
         this.description = description;
     }
 
@@ -33,9 +31,6 @@ public class EventDto {
 
     public LocalDateTime getEnd() { return end; }
     public void setEnd(LocalDateTime end) { this.end = end; }
-
-    public String getTerminalId() { return terminalId; }
-    public void setTerminalId(String terminalId) { this.terminalId = terminalId; }
 
     public String getDescription() { return description; }
     public void setDescription(String description) { this.description = description; }
