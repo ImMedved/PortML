@@ -27,27 +27,31 @@ public class PlanningService {
 
     private final DataService dataService;
     private final MlServiceClient mlClient;
-    private final ModelMapper mapper = new ModelMapper();  // quick mapper; configure later
+    private final ModelMapper mapper = new ModelMapper();
 
     @Getter
     private PlanResponseDto lastPlan;
 
-    public PlanResponseDto generatePlan(com.portmanager.model.PlanningAlgorithm algorithm) {
+    public PlanResponseDto generatePlan(com.portmanager.model.PlanningAlgorithm algorithm,
+                                        boolean disableT1,
+                                        boolean disableT2) {
 
         if (shipRepo.count() == 0) {
-            generatorService.generate(20);                 // n>1
+            generatorService.generate(20);
         }
 
+        List<ShipDto> ships = buildShipDtos();
+        ConditionsDto conditions = buildConditionsDto();
+        PortDto port = buildPortDto(disableT1, disableT2);
+
         PlanRequestDto req = PlanRequestDto.builder()
-                .port(buildPortDto())
-                .ships(buildShipDtos())
-                .conditions(buildConditionsDto())
+                .port(port)
+                .ships(ships)
+                .conditions(conditions)
                 .algorithm(algorithm)
                 .build();
 
         PlanResponseDto mlResponse = mlClient.requestPlan(req);
-
-        List<ShipDto> ships = buildShipDtos(); // ← done upper
 
         PlanResponseDto response = PlanResponseDto.builder()
                 .schedule(mlResponse.getSchedule())
@@ -55,18 +59,24 @@ public class PlanningService {
                 .algorithmUsed(mlResponse.getAlgorithmUsed())
                 .scenarioId(mlResponse.getScenarioId())
                 .ships(ships)
-                .terminalClosures(req.getConditions().getTerminalClosures())
-                .weatherEvents(req.getConditions().getWeatherEvents())
+                .terminalClosures(conditions.getTerminalClosures())
+                .weatherEvents(conditions.getWeatherEvents())
                 .build();
 
         lastPlan = response;
         return response;
     }
 
-    // helpers
-    private PortDto buildPortDto() {
+    // fallback for existing code
+    public PlanResponseDto generatePlan(com.portmanager.model.PlanningAlgorithm algorithm) {
+        return generatePlan(algorithm, false, false);
+    }
+
+    private PortDto buildPortDto(boolean disableT1, boolean disableT2) {
         List<TerminalDto> terminals = dataService.getAllTerminals().stream()
                 .map(t -> mapper.map(t, TerminalDto.class))
+                .filter(t -> !(disableT1 && "T1".equalsIgnoreCase(t.getName())))
+                .filter(t -> !(disableT2 && "T2".equalsIgnoreCase(t.getName())))
                 .toList();
 
         OffsetDateTime now = OffsetDateTime.now();
@@ -80,7 +90,7 @@ public class PlanningService {
     private List<ShipDto> buildShipDtos() {
         return dataService.getAllShips().stream()
                 .map(s -> mapper.map(s, ShipDto.class))
-                .collect(Collectors.toList());
+                .toList();
     }
 
     private ConditionsDto buildConditionsDto() {
@@ -104,9 +114,6 @@ public class PlanningService {
     }
 
     public ConditionsDto getCurrentConditions() {
-        return ConditionsDto.builder()
-                .terminalClosures(buildConditionsDto().getTerminalClosures())
-                .weatherEvents(buildConditionsDto().getWeatherEvents())
-                .build();
+        return buildConditionsDto();
     }
 }

@@ -1,12 +1,20 @@
 package com.portmanager.ui;
 
+import com.portmanager.ui.controller.EventsSettingsController;
+import com.portmanager.ui.controller.TerminalSettingsController;
+import com.portmanager.ui.controller.VesselSettingsController;
 import com.portmanager.ui.model.*;
 import com.portmanager.ui.service.BackendClient;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.fxml.FXML;
+import javafx.fxml.FXMLLoader;
+import javafx.scene.Parent;
+import javafx.scene.Scene;
 import javafx.scene.control.*;
 import javafx.scene.layout.*;
+import javafx.stage.Stage;
 
+import java.io.IOException;
 import java.time.OffsetDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
@@ -174,6 +182,69 @@ public class AppController {
         if (currentPair != null) {
             backendClient.sendFeedback(currentPair.getComparisonId(), "B");
             statusLabel.setText("Plan B chosen");
+        }
+    }
+
+    @FXML
+    private void openTerminalSettings() {
+        try {
+            FXMLLoader loader = new FXMLLoader(getClass().getResource("/terminal_settings.fxml"));
+            Parent root = loader.load();
+            TerminalSettingsController controller = loader.getController();
+
+            // controller.setTerminals(...);
+
+            Stage dialog = new Stage();
+            dialog.setTitle("Terminal Settings");
+            dialog.setScene(new Scene(root));
+            dialog.showAndWait();
+
+            List<TerminalDto> updated = controller.getTerminals();
+            // TODO: сохранить или передать в PlanRequestDto
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    @FXML
+    private void openVesselSettings() {
+        try {
+            FXMLLoader loader = new FXMLLoader(getClass().getResource("/vessels_settings.fxml"));
+            Parent root = loader.load();
+            VesselSettingsController controller = loader.getController();
+
+            // controller.setVessels(...); // если уже есть
+
+            Stage dialog = new Stage();
+            dialog.setTitle("Vessels Settings");
+            dialog.setScene(new Scene(root));
+            dialog.showAndWait();
+
+            List<ShipDto> updated = controller.getVessels();
+            // TODO: сохранить для генерации плана
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    @FXML
+    private void openEventsSettings() {
+        try {
+            FXMLLoader loader = new FXMLLoader(getClass().getResource("/events_settings.fxml"));
+            Parent root = loader.load();
+            EventsSettingsController controller = loader.getController();
+
+            // controller.setEvents(...); // если уже есть
+
+            Stage dialog = new Stage();
+            dialog.setTitle("Events Settings");
+            dialog.setScene(new Scene(root));
+            dialog.showAndWait();
+
+            List<EventDto> updated = controller.getEvents();
+            // TODO: сохранить для генерации
+        } catch (IOException e) {
+            e.printStackTrace();
         }
     }
 
