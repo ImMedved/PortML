@@ -1,33 +1,68 @@
 package com.portmanager.ui.model;
 
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.Map;
 
 public class ShipDto {
     private String id;
-    private String arrivalTime;
-    private String cargoType;
-    private String priority;
+    private LocalDateTime arrivalTime;
     private double length;
     private double draft;
+    private String cargoType;
     private double estDurationHours;
+    private String priority;
+    private LocalDateTime arrival;
 
-    public static ShipDto fromJson(Map<String, Object> json) {
-        ShipDto s = new ShipDto();
-        s.id = (String) json.get("id");
-        s.arrivalTime = (String) json.get("arrivalTime");
-        s.cargoType = (String) json.get("cargoType");
-        s.priority = (String) json.get("priority");
-        s.length = ((Number) json.get("length")).doubleValue();
-        s.draft = ((Number) json.get("draft")).doubleValue();
-        s.estDurationHours = ((Number) json.get("estDurationHours")).doubleValue();
-        return s;
+    public static ShipDto fromJson(Map<String, Object> map) {
+        return new ShipDto(
+                (String) map.get("id"),
+                LocalDateTime.parse((String) map.get("arrivalTime"), DateTimeFormatter.ISO_DATE_TIME),
+                ((Number) map.get("length")).doubleValue(),
+                ((Number) map.get("draft")).doubleValue(),
+                (String) map.get("cargoType"),
+                ((Number) map.get("estDurationHours")).doubleValue(),
+                (String) map.get("priority")
+        );
+    }
+
+    public ShipDto() {}
+
+    public ShipDto(String id, LocalDateTime arrivalTime, double length, double draft, String cargoType, double estDurationHours, String priority) {
+        this.id = id;
+        this.arrivalTime = arrivalTime;
+        this.length = length;
+        this.draft = draft;
+        this.cargoType = cargoType;
+        this.estDurationHours = estDurationHours;
+        this.priority = priority;
     }
 
     public String getId() { return id; }
-    public String getArrivalTime() { return arrivalTime; }
-    public String getCargoType() { return cargoType; }
-    public String getPriority() { return priority; }
+    public void setId(String id) { this.id = id; }
+
+    public LocalDateTime getArrivalTime() { return arrivalTime; }
+    public void setArrivalTime(LocalDateTime arrivalTime) { this.arrivalTime = arrivalTime; }
+
     public double getLength() { return length; }
+    public void setLength(double length) { this.length = length; }
+
     public double getDraft() { return draft; }
+    public void setDraft(double draft) { this.draft = draft; }
+
+    public String getCargoType() { return cargoType; }
+    public void setCargoType(String cargoType) { this.cargoType = cargoType; }
+
     public double getEstDurationHours() { return estDurationHours; }
+    public void setEstDurationHours(double estDurationHours) { this.estDurationHours = estDurationHours; }
+
+    public String getPriority() { return priority; }
+
+    public LocalDateTime getArrival() {
+        return arrival;
+    }
+
+    public void setArrival(LocalDateTime arrival) {
+        this.arrival = arrival;
+    }
 }

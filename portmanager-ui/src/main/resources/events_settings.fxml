@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+
+<AnchorPane xmlns:fx="http://javafx.com/fxml" fx:controller="com.portmanager.ui.controller.EventsSettingsController">
+    <VBox spacing="10" prefWidth="600" prefHeight="400" AnchorPane.topAnchor="0" AnchorPane.bottomAnchor="0"
+          AnchorPane.leftAnchor="0" AnchorPane.rightAnchor="0">
+
+        <TableView fx:id="eventTable" prefHeight="300">
+            <columns>
+                <TableColumn fx:id="typeColumn" text="Type"/>
+                <TableColumn fx:id="startColumn" text="Start Time"/>
+                <TableColumn fx:id="endColumn" text="End Time"/>
+                <TableColumn fx:id="terminalIdColumn" text="Terminal"/>
+                <TableColumn fx:id="descriptionColumn" text="Description"/>
+            </columns>
+        </TableView>
+
+        <HBox spacing="10">
+            <Button text="Add Event" onAction="#onAddEvent"/>
+            <Button text="Confirm" onAction="#onConfirm"/>
+        </HBox>
+
+    </VBox>
+</AnchorPane>

@@ -1,49 +1,114 @@
 package com.portmanager.service;
 
-import com.portmanager.repository.*;
+import com.portmanager.dto.*;
 import com.portmanager.entity.*;
+import com.portmanager.mapper.ShipMapper;
+import com.portmanager.mapper.TerminalMapper;
+import com.portmanager.repository.*;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.OffsetDateTime;
 import java.util.List;
+import java.util.stream.Collectors;
 
-/**
- * DataService
- *
- * Generates or fetches current scenario (terminals + ships + conditions).
- * For now: stub that loads everything already stored in DB; generator will be added later.
- */
 @Service
 @RequiredArgsConstructor
 public class DataService {
 
-    private final TerminalRepository terminalRepo;
-    private final ShipRepository shipRepo;
+    private final TerminalRepository        terminalRepo;
+    private final ShipRepository            shipRepo;
     private final TerminalClosureRepository closureRepo;
-    private final WeatherEventRepository weatherRepo;
+    private final WeatherEventRepository    weatherRepo;
 
-    /** Return lists for building PlanRequest. */
+    private final TerminalMapper terminalMapper;
+    private final ShipMapper      shipMapper;
+
+    /* ---------- сохранение сценария (уже сделано ранее) ---------- */
+
+    @Transactional
+    public void overwriteWithUserData(ConditionsDto dto) {
+        closureRepo.deleteAllInBatch();
+        weatherRepo.deleteAllInBatch();
+        shipRepo.deleteAllInBatch();
+        terminalRepo.deleteAllInBatch();
+
+        terminalRepo.saveAll(
+                dto.terminals().stream()
+                        .map(terminalMapper::toEntity)
+                        .toList());
+
+        shipRepo.saveAll(
+                dto.ships().stream()
+                        .map(shipMapper::toEntity)
+                        .toList());
+
+        for (EventDto ev : dto.events()) {
+            switch (ev.getEventType()) {
+                case TERMINAL_CLOSURE -> {
+                    var e = (TerminalClosureEventDto) ev;
+                    var entity = new TerminalClosureEntity();
+                    entity.setTerminalId(e.terminalId());
+                    entity.setStartTime(e.start());
+                    entity.setEndTime(e.end());
+                    closureRepo.save(entity);
+                }
+                case WEATHER -> {
+                    var w = (WeatherEventDto) ev;
+                    var entity = new WeatherEventEntity();
+                    entity.setStartTime(w.start());
+                    entity.setEndTime(w.end());
+                    weatherRepo.save(entity);
+                }
+            }
+        }
+    }
+
+    /* ---------- новый единый снимок ---------- */
+
     @Transactional(readOnly = true)
-    public List<TerminalEntity> getAllTerminals() {
-        return terminalRepo.findAll();
+    public ConditionsDto getCurrentConditions() {
+
+        List<TerminalDto> terminals = terminalRepo.findAll().stream()
+                .map(terminalMapper::toDto)
+                .toList();
+
+        List<ShipDto> ships = shipRepo.findAll().stream()
+                .map(shipMapper::toDto)
+                .toList();
+
+        List<EventDto> events = closureRepo.findAll().stream()
+                .<EventDto>map(c -> new TerminalClosureEventDto(
+                        c.getTerminalId(), c.getStartTime(), c.getEndTime()))
+                .collect(Collectors.toList());
+
+        events.addAll(
+                weatherRepo.findAll().stream()
+                        .map(w -> (EventDto) new WeatherEventDto(
+                                w.getStartTime(), w.getEndTime()))
+                        .toList());
+
+        return new ConditionsDto(terminals, ships, events);
+    }
+
+    /* ---------- вспомогательные методы (могут использоваться другими сервисами) ---------- */
+
+    @Transactional(readOnly = true)
+    public List<ShipDto> mapShipsToDto() {
+        return shipRepo.findAll().stream()
+                .map(shipMapper::toDto)
+                .toList();
     }
 
     @Transactional(readOnly = true)
-    public List<ShipEntity> getAllShips() {
-        return shipRepo.findAll();
+    public PortDto buildPortDto() {
+        return new PortDto(
+                terminalRepo.findAll().stream()
+                        .map(terminalMapper::toDto)
+                        .toList(),
+                OffsetDateTime.now(),
+                OffsetDateTime.now().plusDays(7)
+        );
     }
-
-    @Transactional(readOnly = true)
-    public List<TerminalClosureEntity> getClosures() {
-        return closureRepo.findAll();
-    }
-
-    @Transactional(readOnly = true)
-    public List<WeatherEventEntity> getWeatherEvents() {
-        return weatherRepo.findAll();
-    }
-
-    /** TODO: generateScenario(#ships) – will wipe and insert fresh test data. */
 }

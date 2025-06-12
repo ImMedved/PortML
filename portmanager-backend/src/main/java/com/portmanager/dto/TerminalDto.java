@@ -1,30 +1,20 @@
 package com.portmanager.dto;
 
-import lombok.*;
-import jakarta.validation.constraints.*;
 import java.util.List;
 
 /**
- * TerminalDto
+ * Терминал порта.
  *
- * Static capabilities of a berth/terminal.
+ * @param id         первичный ключ (0 или null при создании нового)
+ * @param name       удобочитаемое имя (T1, South-1 и т.п.)
+ * @param maxLength  максимальная длина судна, м
+ * @param maxDraft   максимальная осадка, м
+ * @param cargoTypes список поддерживаемых типов груза (CONTAINER, BULK …)
  */
-@Data
-@NoArgsConstructor
-@AllArgsConstructor
-@Builder
-public class TerminalDto {
-
-    private int id;
-
-    private String name;
-
-    @Positive
-    private double maxLength;  // metres
-
-    @Positive
-    private double maxDraft;   // metres
-
-    @NotNull
-    private List<String> allowedCargoTypes;
-}
+public record TerminalDto(
+        Long id,
+        String name,
+        double maxLength,
+        double maxDraft,
+        List<String> cargoTypes
+) {}

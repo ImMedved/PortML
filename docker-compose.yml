@@ -20,7 +20,7 @@ services:
     build:
       context: ./ml-service
     ports:
-      - "8000:8000"
+      - "5000:5000"
     restart: unless-stopped
 
   backend:
@@ -32,7 +32,7 @@ services:
       SPRING_DATASOURCE_URL: jdbc:postgresql://db:5432/portml
       SPRING_DATASOURCE_USERNAME: portml
       SPRING_DATASOURCE_PASSWORD: portml
-      ML_SERVICE_URL: http://ml-service:8000
+      ML_SERVICE_URL: http://ml-service:5000/api
     depends_on:
       db:
         condition: service_healthy
@@ -41,10 +41,9 @@ services:
     restart: unless-stopped
 
   ui:
-    build:
-      context: ./portmanager-ui
-    ports:
-      - "8082:8080"
+    build: ./portmanager-ui
+    environment:
+      - UI_BACKEND_URL=http://backend:8080/api
     depends_on:
       - backend
 

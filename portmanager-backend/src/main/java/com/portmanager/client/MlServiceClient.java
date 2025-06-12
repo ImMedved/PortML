@@ -1,57 +1,26 @@
 package com.portmanager.client;
 
+import com.portmanager.dto.*;
 import lombok.RequiredArgsConstructor;
-import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.*;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestTemplate;
 
-import com.portmanager.dto.PairwiseFeedbackDto;
-import com.portmanager.dto.PlanRequestDto;
-import com.portmanager.dto.PlanResponseDto;
-
-import jakarta.annotation.PostConstruct;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-/**
- * MlServiceClient
- *
- * Thin wrapper around HTTP calls to FastAPI ML service.
- * All endpoints are fixed under the /v1 prefix.
- */
 @Component
 @RequiredArgsConstructor
 public class MlServiceClient {
 
-    private static final Logger log = LoggerFactory.getLogger(MlServiceClient.class);
+    private static final String BASE = "http://ml-service:5000/api";
+    private final RestTemplate rest = new RestTemplate();
 
-    private final RestTemplate restTemplate;
+    public PlanResponseDto requestPlan(ConditionsDto scenario, String algorithm) {
 
-    @Value("${ml.service.url:http://localhost:8000}")
-    private String baseUrl;
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_JSON);
 
-    private String mlServiceUrl;
+        HttpEntity<ConditionsDto> entity = new HttpEntity<>(scenario, headers);
+        String url = BASE + "/plan?algorithm=" + algorithm;
 
-    @PostConstruct
-    private void init() {
-        // ensure it ends with /v1
-        if (baseUrl.endsWith("/v1")) {
-            mlServiceUrl = baseUrl;
-        } else {
-            mlServiceUrl = baseUrl.endsWith("/") ? baseUrl + "v1" : baseUrl + "/v1";
-        }
-        log.info("ML Service URL resolved to: {}", mlServiceUrl);
-    }
-
-    public PlanResponseDto requestPlan(PlanRequestDto req) {
-        return restTemplate.postForObject(mlServiceUrl + "/plan", req, PlanResponseDto.class);
-    }
-
-    public void sendFeedback(PairwiseFeedbackDto dto) {
-        restTemplate.postForLocation(mlServiceUrl + "/feedback", dto);
-    }
-
-    public void train() {
-        restTemplate.postForLocation(mlServiceUrl + "/train", null);
+        return rest.postForObject(url, entity, PlanResponseDto.class);
     }
 }

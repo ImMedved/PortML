@@ -18,7 +18,7 @@ public class ShipRow {
     }
 
     public String getArrivalTime() {
-        return dto.getArrivalTime();
+        return dto.getArrivalTime().toString();
     }
 
     public String getCargoType() {
@@ -32,4 +32,8 @@ public class ShipRow {
     public String getLength() {
         return String.valueOf(dto.getLength());
     }
+
+    public String getDraft() { return String.valueOf(dto.getDraft()); }
+
+    public String getDuration() { return String.valueOf(dto.getEstDurationHours()); }
 }

@@ -1,35 +1,22 @@
 package com.portmanager.dto;
 
-import lombok.*;
-import jakarta.validation.constraints.*;
 import java.time.OffsetDateTime;
 
 /**
- * ShipDto
+ * Судно, ожидающее швартовки.
  *
- * Vessel arrival data and estimated handling duration.
+ * @param id        первичный ключ (0/ null для нового)
+ * @param name      идентификатор (V123, MSC Aurora …)
+ * @param length    длина, м
+ * @param draft     осадка, м
+ * @param cargoType тип груза
+ * @param eta       расчетное время прибытия (UTC)
  */
-@Data
-@NoArgsConstructor
-@AllArgsConstructor
-@Builder
-public class ShipDto {
-
-    @NotBlank
-    private String id;
-
-    @NotNull
-    private OffsetDateTime arrivalTime;
-
-    @Positive
-    private double length;   // metres
-
-    @Positive
-    private double draft;    // metres
-
-    @NotBlank
-    private String cargoType;
-
-    @Positive
-    private double estDurationHours;
-}
+public record ShipDto(
+        Long id,
+        String name,
+        double length,
+        double draft,
+        String cargoType,
+        OffsetDateTime eta
+) {}

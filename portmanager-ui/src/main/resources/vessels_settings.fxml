@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+
+<AnchorPane xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml"
+            fx:controller="com.portmanager.ui.controller.VesselSettingsController">
+    <VBox spacing="10" prefWidth="600" prefHeight="400"
+          AnchorPane.topAnchor="0" AnchorPane.bottomAnchor="0"
+          AnchorPane.leftAnchor="0" AnchorPane.rightAnchor="0">
+
+        <TableView fx:id="shipTable" prefHeight="300">
+            <columns>
+                <TableColumn fx:id="idColumn" text="ID"/>
+                <TableColumn fx:id="lengthColumn" text="Length"/>
+                <TableColumn fx:id="draftColumn" text="Draft"/>
+                <TableColumn fx:id="arrivalColumn" text="Arrival"/>
+                <TableColumn fx:id="durationColumn" text="Hours"/>
+                <TableColumn fx:id="cargoColumn" text="Cargo Type"/>
+            </columns>
+        </TableView>
+
+        <HBox spacing="10">
+            <Button text="Add Vessel" onAction="#onAddShip"/>
+            <Button text="Confirm" onAction="#onConfirm"/>
+        </HBox>
+
+    </VBox>
+</AnchorPane>

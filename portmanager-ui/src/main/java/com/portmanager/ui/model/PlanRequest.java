@@ -1,16 +1,12 @@
 package com.portmanager.ui.model;
+
 import java.util.List;
 import java.util.Map;
 
 public class PlanRequest {
-    private Integer scenarioId;
-    private String algorithmUsed;
-    private List<ScheduleEntry> schedule;
-    private Metrics metrics;
-
     private final String algorithm;
-    private final String cargoPreference;     // "bulk", "liquid", "containers"
-    private final String priorityLevel;       // "normal", "high", "critical"
+    private final String cargoPreference;
+    private final String priorityLevel;
     private final boolean disableTerminal1;
     private final boolean disableTerminal2;
 
@@ -45,9 +41,11 @@ public class PlanRequest {
         return disableTerminal2;
     }
 
-    public Integer getScenarioId() { return scenarioId; }
-    public String getAlgorithmUsed() { return algorithmUsed; }
-    public List<ScheduleEntry> getSchedule() { return schedule; }
-    public Metrics getMetrics() { return metrics; }
-    public List<Map<String, Object>> getShips() { return ships; }
+    public List<Map<String, Object>> getShips() {
+        return ships;
+    }
+
+    public void setShips(List<Map<String, Object>> ships) {
+        this.ships = ships;
+    }
 }

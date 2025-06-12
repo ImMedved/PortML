@@ -1,22 +1,18 @@
 package com.portmanager.dto;
 
-import lombok.*;
 import java.util.List;
 
 /**
- * ConditionsDto
+ * Полный сценарий для планирования: терминалы, суда, события.
  *
- * External constraints affecting scheduling, such as terminal maintenance or weather events.
+ * Совпадает по полям с record, используемым в JavaFX-UI.
+ *
+ * @param terminals список терминалов
+ * @param ships     список судов
+ * @param events    список событий (полиморфных)
  */
-@Data
-@NoArgsConstructor
-@AllArgsConstructor
-@Builder(toBuilder = true)
-public class ConditionsDto {
-
-    @Builder.Default
-    private List<TerminalClosureDto> terminalClosures = List.of();
-
-    @Builder.Default
-    private List<WeatherEventDto> weatherEvents = List.of();
-}
+public record ConditionsDto(
+        List<TerminalDto> terminals,
+        List<ShipDto>     ships,
+        List<EventDto>    events
+) {}

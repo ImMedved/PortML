@@ -1,31 +1,29 @@
 package com.portmanager.entity;
 
 import jakarta.persistence.*;
-import lombok.*;
+import lombok.Getter;
+import lombok.Setter;
+
+import java.util.ArrayList;
 import java.util.List;
 
-/**
- * TerminalEntity
- *
- * Table `terminal` – static berth capabilities.
- */
 @Entity
-@Table(name = "terminal")
-@Getter @Setter @NoArgsConstructor @AllArgsConstructor @Builder
+@Table(name = "terminals")
+@Getter @Setter
 public class TerminalEntity {
 
     @Id
-    private Integer id;
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
 
     private String name;
-
     private double maxLength;
     private double maxDraft;
 
-    /** Allowed cargo types – stored in side-table `terminal_allowed_cargo`. */
+    /** Перечень грузов, которые может обрабатывать терминал. */
     @ElementCollection(fetch = FetchType.EAGER)
-    @CollectionTable(name = "terminal_allowed_cargo",
+    @CollectionTable(name = "terminal_cargo_types",
             joinColumns = @JoinColumn(name = "terminal_id"))
     @Column(name = "cargo_type")
-    private List<String> allowedCargoTypes;
+    private List<String> cargoTypes = new ArrayList<>();
 }
