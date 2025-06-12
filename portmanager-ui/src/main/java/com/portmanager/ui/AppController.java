@@ -1,7 +1,7 @@
 package com.portmanager.ui;
 
-import com.portmanager.ui.controller.ScheduleController;
-import com.portmanager.ui.controller.SettingsResult;
+import com.portmanager.ui.board.ManualBoardController;
+import com.portmanager.ui.board.MlBoardController;
 import com.portmanager.ui.model.*;
 import com.portmanager.ui.service.BackendClient;
 import javafx.beans.property.SimpleStringProperty;
@@ -11,137 +11,140 @@ import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
 import javafx.scene.layout.GridPane;
-import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
 
 import java.io.IOException;
 import java.util.*;
 
+/**
+ * Main controller that wires UI together.
+ * Owns two boards: manual (editable) and ML (read-only).
+ */
 public class AppController {
 
+    /* ---------- FXML ---------- */
     @FXML private ComboBox<String> algorithmSelector;
-    @FXML private GridPane planGrid;
-    @FXML private Label totalLabel, delayedLabel, utilLabel, planInfoLabel, statusLabel;
-    @FXML private TableView<ShipRow> shipTable;
-    @FXML private TableColumn<ShipRow, String> shipColumn, arrivalColumn, cargoColumn, priorityColumn, lengthColumn, draftColumn, durationColumn;
-    @FXML private VBox conditionsBox;
-    @FXML private Label weatherLabel, closuresLabel;
+    @FXML private GridPane manualGrid;
+    @FXML private GridPane mlGrid;
+
+    @FXML private Label planInfoLabel, statusLabel;
     @FXML private Label terminalCount, vesselCount, eventCount;
-    @FXML private ScheduleController scheduleController;
 
-    private final BackendClient backendClient = BackendClient.get();
+    @FXML private TableView<ShipRow> shipTable;
+    @FXML private TableColumn<ShipRow, String> shipColumn, arrivalColumn,
+            cargoColumn, priorityColumn, lengthColumn, draftColumn, durationColumn;
 
-    private List<ShipDto> manualShips = new ArrayList<>();
-    private List<TerminalDto> manualTerminals = new ArrayList<>();
-    private List<EventDto> manualEvents = new ArrayList<>();
+    /* ---------- state ---------- */
+    private final BackendClient backend = BackendClient.get();
+    private final ManualBoardController manualBoard = new ManualBoardController();
+    private final MlBoardController mlBoard       = new MlBoardController();
 
+    private List<ShipDto>     ships     = new ArrayList<>();
+    private List<TerminalDto> terminals = new ArrayList<>();
+    private List<EventDto>    events    = new ArrayList<>();
+
+    /* ---------- init ---------- */
     @FXML
-    public void initialize() {
+    private void initialize() {
         algorithmSelector.getItems().addAll("baseline", "boosting", "RL");
         algorithmSelector.setValue("baseline");
 
-        shipColumn.setCellValueFactory(d -> new SimpleStringProperty(d.getValue().getVesselId()));
-        arrivalColumn.setCellValueFactory(d -> new SimpleStringProperty(d.getValue().getArrivalTime()));
-        cargoColumn.setCellValueFactory(d -> new SimpleStringProperty(d.getValue().getCargoType()));
-        priorityColumn.setCellValueFactory(d -> new SimpleStringProperty(d.getValue().getPriority()));
-        lengthColumn.setCellValueFactory(d -> new SimpleStringProperty(d.getValue().getLength()));
-        draftColumn.setCellValueFactory(d -> new SimpleStringProperty(d.getValue().getDraft()));
-        durationColumn.setCellValueFactory(d -> new SimpleStringProperty(d.getValue().getDuration()));
-
-        shipTable.setOnMouseClicked(e -> Optional.ofNullable(shipTable.getSelectionModel().getSelectedItem())
-                .ifPresent(s -> ShipInfoDialog.show(s.getDto())));
+        bindShipTable();
+        manualBoard.attach(manualGrid);
+        mlBoard.attach(mlGrid);
     }
 
-    @FXML private void onGeneratePlan() {
-        setStatus("Requesting plan...");
-        ConditionsDto dto = new ConditionsDto(manualTerminals, manualShips, manualEvents);
-        backendClient.generatePlan(dto).ifPresentOrElse(plan -> {
-            scheduleController.renderPlan(plan);
-            planInfoLabel.setText("ID: " + plan.getScenarioId() + " · " + plan.getAlgorithmUsed());
-            setStatus("Ready");
-        }, () -> {
-            setStatus("Failed to get plan");
-            showError("Error", "No plan received");
-        });
+    /* ---------- toolbar actions ---------- */
+
+    @FXML
+    private void onGeneratePlan() {
+        setStatus("Requesting plan …");
+        ConditionsDto dto = new ConditionsDto(terminals, ships, events);
+
+        backend.generatePlan(dto).ifPresentOrElse(plan -> {
+            mlBoard.renderConditions(dto);
+            mlBoard.renderPlan(plan);
+            planInfoLabel.setText("ID: %s · %s".formatted(plan.getScenarioId(), plan.getAlgorithmUsed()));
+            setStatus("Plan received");
+        }, () -> setStatus("Failed to get plan"));
     }
 
-    @FXML private void onRandomData() {
-        setStatus("Requesting random data...");
-        backendClient.requestRandomData(20).ifPresentOrElse(dto -> {
-            manualTerminals = dto.terminals();
-            manualShips = dto.ships();
-            manualEvents = dto.events();
-            terminalCount.setText(String.valueOf(manualTerminals.size()));
-            vesselCount.setText(String.valueOf(manualShips.size()));
-            eventCount.setText(String.valueOf(manualEvents.size()));
-            scheduleController.renderConditions(dto);
+    @FXML
+    private void onRandomData() {
+        setStatus("Requesting random data …");
+        backend.requestRandomData(20).ifPresentOrElse(dto -> {
+            terminals = dto.terminals();
+            ships     = dto.ships();
+            events    = dto.events();
+            refreshCounts();
+            reloadBoards();
             setStatus("Random data loaded");
-        }, () -> {
-            setStatus("Failed to load random data");
-            showError("Error", "No data received");
-        });
+        }, () -> setStatus("Failed to load data"));
     }
 
-    @FXML private void onSaveData() {
-        ConditionsDto dto = new ConditionsDto(manualTerminals, manualShips, manualEvents);
-        boolean ok = backendClient.saveDataToDatabase(dto);
-        if (ok) setStatus("Data saved");
-        else setStatus("Save failed");
+    @FXML
+    private void onSaveData() {
+        boolean ok = backend.saveDataToDatabase(new ConditionsDto(terminals, ships, events));
+        setStatus(ok ? "Data saved" : "Save failed");
     }
 
-    @FXML private void onShowLastPlan() {
-        backendClient.getLastAcceptedPlan().ifPresentOrElse(plan -> {
-            scheduleController.renderPlan(plan);
-            planInfoLabel.setText("(cached) ID: " + plan.getScenarioId());
-            setStatus("Plan displayed");
-        }, () -> setStatus("No previous plan"));
-    }
+    /* ---------- settings dialogs ---------- */
 
-    @FXML private void openTerminalSettings() {
-        manualTerminals = openSettingsDialog("/terminal_settings.fxml", manualTerminals);
-        terminalCount.setText(String.valueOf(manualTerminals.size()));
-        scheduleController.showTerminalCount(manualTerminals.size());
-    }
+    @FXML private void openTerminalSettings() { terminals = open("/terminal_settings.fxml", terminals);  afterEdit(); }
+    @FXML private void openVesselSettings()   { ships     = open("/vessels_settings.fxml",  ships);      afterEdit(); }
+    @FXML private void openEventsSettings()   { events    = open("/events_settings.fxml",   events);     afterEdit(); }
 
-    @FXML private void openVesselSettings() {
-        manualShips = openSettingsDialog("/vessels_settings.fxml", manualShips);
-        vesselCount.setText(String.valueOf(manualShips.size()));
-    }
+    /* ---------- helpers ---------- */
 
-    @FXML private void openEventsSettings() {
-        manualEvents = openSettingsDialog("/events_settings.fxml", manualEvents);
-        eventCount.setText(String.valueOf(manualEvents.size()));
-        scheduleController.markClosures(manualEvents);
-    }
-
-    private <T> List<T> openSettingsDialog(String fxmlPath, List<T> initial) {
+    private <T> List<T> open(String fxml, List<T> init) {
         try {
-            FXMLLoader loader = new FXMLLoader(getClass().getResource(fxmlPath));
-            Parent root = loader.load();
-            SettingsResult<T> controller = loader.getController();
-            controller.setData(initial);
+            FXMLLoader l = new FXMLLoader(getClass().getResource(fxml));
+            Parent root  = l.load();
+            var ctrl     = (com.portmanager.ui.controller.SettingsResult<T>) l.getController();
+            ctrl.setData(init);
 
-            Stage dialog = new Stage();
-            dialog.setTitle("Settings");
-            dialog.setScene(new Scene(root));
-            dialog.showAndWait();
-
-            return controller.collectResult();
-        } catch (IOException e) {
-            e.printStackTrace();
-            return initial;
+            Stage dlg = new Stage();
+            dlg.setTitle("Settings");
+            dlg.setScene(new Scene(root));
+            dlg.showAndWait();
+            return ctrl.collectResult();
+        } catch (IOException ex) {
+            ex.printStackTrace();
+            return init;
         }
     }
 
-    private void setStatus(String msg) {
-        statusLabel.setText("[Port] " + msg);
+    private void afterEdit() {
+        refreshCounts();
+        reloadBoards();
     }
 
-    private void showError(String title, String message) {
-        Alert alert = new Alert(Alert.AlertType.ERROR);
-        alert.setTitle(title);
-        alert.setHeaderText(null);
-        alert.setContentText(message);
-        alert.showAndWait();
+    private void reloadBoards() {
+        ConditionsDto dto = new ConditionsDto(terminals, ships, events);
+        manualBoard.renderConditions(dto);
+        mlBoard.renderConditions(dto);   // only rows + events
+    }
+
+    private void refreshCounts() {
+        terminalCount.setText(String.valueOf(terminals.size()));
+        vesselCount.setText(String.valueOf(ships.size()));
+        eventCount.setText(String.valueOf(events.size()));
+    }
+
+    private void setStatus(String msg) { statusLabel.setText("[Port] " + msg); }
+
+    private void bindShipTable() {
+        shipColumn.setCellValueFactory   (d -> new SimpleStringProperty(d.getValue().getVesselId()));
+        arrivalColumn.setCellValueFactory(d -> new SimpleStringProperty(d.getValue().getArrivalTime()));
+        cargoColumn.setCellValueFactory  (d -> new SimpleStringProperty(d.getValue().getCargoType()));
+        priorityColumn.setCellValueFactory(d -> new SimpleStringProperty(d.getValue().getPriority()));
+        lengthColumn.setCellValueFactory (d -> new SimpleStringProperty(d.getValue().getLength()));
+        draftColumn.setCellValueFactory  (d -> new SimpleStringProperty(d.getValue().getDraft()));
+        durationColumn.setCellValueFactory(d -> new SimpleStringProperty(d.getValue().getDuration()));
+
+        shipTable.setOnMouseClicked(e ->
+                Optional.ofNullable(shipTable.getSelectionModel().getSelectedItem())
+                        .ifPresent(s -> ShipInfoDialog.show(s.getDto()))
+        );
     }
 }

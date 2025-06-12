@@ -10,7 +10,7 @@ public class ShipInfoDialog {
         alert.setHeaderText("Vessel: " + ship.getId());
 
         String content = String.format(
-                "Arrival date: %s\nLength: %.1f м\nDraft: %.1f м\nCargo type: %s\nUnload time: %.1f ч",
+                "Arrival date: %s\nLength: %.1f m\nDraft: %.1f m\nCargo type: %s\nUnload time: %.1f h",
                 ship.getArrivalTime(),
                 ship.getLength(),
                 ship.getDraft(),
