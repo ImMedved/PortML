@@ -15,7 +15,7 @@ log = logging.getLogger(__name__)
 @router.post("/plan", response_model=PlanResponseModel)
 def generate_plan(req: PlanRequestModel) -> PlanResponseModel:
     """Build a single plan using the selected algorithm."""
-    return planner.plan(req)
+    return get_planner(req).build() # direct build, KPI via wrapper
 
 # feedback
 @router.post("/feedback")

@@ -12,7 +12,8 @@ public class ShipMapper {
 
     public ShipEntity toEntity(ShipDto dto) {
         ShipEntity e = new ShipEntity();
-        e.setId(dto.id());
+        /* id is filled only if String-id can be converted to long */
+        try { e.setId(Long.parseLong(dto.id())); } catch (NumberFormatException ignored) {}
         e.setName(dto.name());
         e.setLength(dto.length());
         e.setDraft(dto.draft());
@@ -25,7 +26,7 @@ public class ShipMapper {
 
     public ShipDto toDto(ShipEntity e) {
         return new ShipDto(
-                e.getId(),
+                String.valueOf(e.getId()),          // ←  Long ➜ String
                 e.getName(),
                 e.getLength(),
                 e.getDraft(),

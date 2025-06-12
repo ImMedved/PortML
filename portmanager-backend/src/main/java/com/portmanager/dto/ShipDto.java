@@ -10,7 +10,7 @@ import java.time.OffsetDateTime;
  */
 public record ShipDto(
 
-        Long id,
+        String id,
         String name,
         double length,
         double draft,

@@ -10,7 +10,7 @@ CREATE TABLE terminal_allowed_cargo (
     cargo_type  VARCHAR(32) NOT NULL
 );
 
-CREATE TABLE ship (
+CREATE TABLE ships (
     id                 BIGSERIAL PRIMARY KEY,
     name               VARCHAR(64),
     arrival_time       TIMESTAMPTZ NOT NULL,

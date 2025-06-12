@@ -24,7 +24,6 @@ public class ShipEntity {
 
     /** ETA in UTC. */
     private OffsetDateTime eta;
-
     private double estDurationHours;
     private String priority;
 }

@@ -1,7 +1,9 @@
 package com.portmanager.ui.model;
 
 import java.util.List;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
+@JsonIgnoreProperties(ignoreUnknown = true)
 public class PlanResponseDto {
     private String scenarioId;
     private String algorithmUsed;

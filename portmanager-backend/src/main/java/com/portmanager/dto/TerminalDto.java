@@ -1,5 +1,7 @@
 package com.portmanager.dto;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
+
 import java.util.List;
 
 /**
@@ -16,5 +18,6 @@ public record TerminalDto(
         String name,
         double maxLength,
         double maxDraft,
+        @JsonProperty("allowedCargoTypes")
         List<String> cargoTypes
 ) {}
