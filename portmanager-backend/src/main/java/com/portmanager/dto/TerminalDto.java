@@ -3,13 +3,13 @@ package com.portmanager.dto;
 import java.util.List;
 
 /**
- * Терминал порта.
+ * Port terminal.
  *
- * @param id         первичный ключ (0 или null при создании нового)
- * @param name       удобочитаемое имя (T1, South-1 и т.п.)
- * @param maxLength  максимальная длина судна, м
- * @param maxDraft   максимальная осадка, м
- * @param cargoTypes список поддерживаемых типов груза (CONTAINER, BULK …)
+ * @param id primary key (0 or null when creating new)
+ * @param name human-readable name (T1, South-1, etc.)
+ * @param maxLength maximum vessel length, m
+ * @param maxDraft maximum draft, m
+ * @param cargoTypes list of supported cargo types (CONTAINER, BULK …)
  */
 public record TerminalDto(
         Long id,

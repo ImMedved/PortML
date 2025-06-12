@@ -9,7 +9,7 @@ public class TerminalMapper {
 
     public TerminalEntity toEntity(TerminalDto dto) {
         TerminalEntity e = new TerminalEntity();
-        e.setId(dto.id());              // может быть null → JPA сгенерирует
+        e.setId(dto.id());              // may be null → JPA will generate
         e.setName(dto.name());
         e.setMaxLength(dto.maxLength());
         e.setMaxDraft(dto.maxDraft());

@@ -1,8 +1,6 @@
 package com.portmanager;
 
 /**
- * PortManagerApplication
- *
  * Main entry-point for the Spring Boot backend of the demo berth-allocation project.
  * Starts the web server and scans components in the com.portmanager package.
  */
@@ -14,7 +12,7 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 @SpringBootApplication
 public class PortManagerApplication {
     private final ScenarioGeneratorService generatorService;
-    // spring-boot создаёт bean через конструктор
+    // spring-boot creates a bean via a constructor
     public PortManagerApplication(ScenarioGeneratorService generatorService) {
         this.generatorService = generatorService;
     }

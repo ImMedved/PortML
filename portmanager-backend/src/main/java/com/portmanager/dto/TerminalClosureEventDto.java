@@ -3,11 +3,11 @@ package com.portmanager.dto;
 import java.time.OffsetDateTime;
 
 /**
- * Событие: ремонт / закрытие конкретного терминала.
+ * Event: repair/closing of a specific terminal.
  *
- * @param terminalId id терминала
- * @param start      начало закрытия
- * @param end        конец закрытия
+ * @param terminalId terminal id
+ * @param start start of closing
+ * @param end end of closing
  */
 public record TerminalClosureEventDto(
         long terminalId,

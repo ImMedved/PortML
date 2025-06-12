@@ -6,8 +6,6 @@ import java.util.List;
 import java.time.OffsetDateTime;
 
 /**
- * PortDto
- *
  * Describes the port infrastructure and time horizon for planning.
  */
 @Data

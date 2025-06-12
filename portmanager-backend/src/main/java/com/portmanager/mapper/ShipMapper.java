@@ -4,6 +4,9 @@ import com.portmanager.dto.ShipDto;
 import com.portmanager.entity.ShipEntity;
 import org.springframework.stereotype.Component;
 
+/**
+ * Bidirectional mapper ShipDto ⇄ ShipEntity.
+ */
 @Component
 public class ShipMapper {
 
@@ -15,6 +18,8 @@ public class ShipMapper {
         e.setDraft(dto.draft());
         e.setCargoType(dto.cargoType());
         e.setEta(dto.eta());
+        e.setEstDurationHours(dto.estDurationHours());
+        e.setPriority(dto.priority());
         return e;
     }
 
@@ -25,7 +30,9 @@ public class ShipMapper {
                 e.getLength(),
                 e.getDraft(),
                 e.getCargoType(),
-                e.getEta()
+                e.getEta(),
+                e.getEstDurationHours(),
+                e.getPriority()
         );
     }
 }

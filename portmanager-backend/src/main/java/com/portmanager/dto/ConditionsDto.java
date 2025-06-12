@@ -3,13 +3,13 @@ package com.portmanager.dto;
 import java.util.List;
 
 /**
- * Полный сценарий для планирования: терминалы, суда, события.
+ * Complete scenario for scheduling: terminals, ships, events.
  *
- * Совпадает по полям с record, используемым в JavaFX-UI.
+ * Matches fields with record used in JavaFX-UI.
  *
- * @param terminals список терминалов
- * @param ships     список судов
- * @param events    список событий (полиморфных)
+ * @param terminals list of terminals
+ * @param ships list of ships
+ * @param events list of events (polymorphic)
  */
 public record ConditionsDto(
         List<TerminalDto> terminals,

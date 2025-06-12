@@ -25,7 +25,7 @@ public class DataService {
     private final TerminalMapper terminalMapper;
     private final ShipMapper      shipMapper;
 
-    /* ---------- сохранение сценария (уже сделано ранее) ---------- */
+    /* ---------- save script ---------- */
 
     @Transactional
     public void overwriteWithUserData(ConditionsDto dto) {
@@ -65,7 +65,7 @@ public class DataService {
         }
     }
 
-    /* ---------- новый единый снимок ---------- */
+    /* ---------- new single snapshot ---------- */
 
     @Transactional(readOnly = true)
     public ConditionsDto getCurrentConditions() {
@@ -92,7 +92,7 @@ public class DataService {
         return new ConditionsDto(terminals, ships, events);
     }
 
-    /* ---------- вспомогательные методы (могут использоваться другими сервисами) ---------- */
+    /* ---------- helper methods (can be used by other services) ---------- */
 
     @Transactional(readOnly = true)
     public List<ShipDto> mapShipsToDto() {
