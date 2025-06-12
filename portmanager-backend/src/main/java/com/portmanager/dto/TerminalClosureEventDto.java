@@ -1,5 +1,8 @@
 package com.portmanager.dto;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+
+import java.time.LocalDateTime;
 import java.time.OffsetDateTime;
 
 /**
@@ -9,10 +12,13 @@ import java.time.OffsetDateTime;
  * @param start start of closing
  * @param end end of closing
  */
+@JsonIgnoreProperties(ignoreUnknown = true)
 public record TerminalClosureEventDto(
         long terminalId,
-        OffsetDateTime start,
-        OffsetDateTime end
+        LocalDateTime start,
+        LocalDateTime end,
+        String description
+
 ) implements EventDto {
 
     @Override

@@ -1,5 +1,8 @@
 package com.portmanager.dto;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+
+import java.time.LocalDateTime;
 import java.time.OffsetDateTime;
 
 /**
@@ -8,9 +11,11 @@ import java.time.OffsetDateTime;
  * @param start start
  * @param end end
  */
+@JsonIgnoreProperties(ignoreUnknown = true)
 public record WeatherEventDto(
-        OffsetDateTime start,
-        OffsetDateTime end
+        LocalDateTime start,
+        LocalDateTime end,
+        String description
 ) implements EventDto {
 
     @Override

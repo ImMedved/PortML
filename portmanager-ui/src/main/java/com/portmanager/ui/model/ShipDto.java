@@ -1,9 +1,12 @@
 package com.portmanager.ui.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.Map;
 
+@JsonIgnoreProperties(ignoreUnknown = true)
 public class ShipDto {
     private String id;
     private LocalDateTime arrivalTime;
@@ -14,21 +17,25 @@ public class ShipDto {
     private String priority;
     private LocalDateTime arrival;
 
+    /* ---------- static factory ---------- */
     public static ShipDto fromJson(Map<String, Object> map) {
         return new ShipDto(
-                (String) map.get("id"),
+                (String)  map.get("id"),
                 LocalDateTime.parse((String) map.get("arrivalTime"), DateTimeFormatter.ISO_DATE_TIME),
                 ((Number) map.get("length")).doubleValue(),
                 ((Number) map.get("draft")).doubleValue(),
-                (String) map.get("cargoType"),
+                (String)  map.get("cargoType"),
                 ((Number) map.get("estDurationHours")).doubleValue(),
-                (String) map.get("priority")
+                (String)  map.get("priority")
         );
     }
 
+    /* ---------- ctors / getters / setters ---------- */
     public ShipDto() {}
 
-    public ShipDto(String id, LocalDateTime arrivalTime, double length, double draft, String cargoType, double estDurationHours, String priority) {
+    public ShipDto(String id, LocalDateTime arrivalTime,
+                   double length, double draft, String cargoType,
+                   double estDurationHours, String priority) {
         this.id = id;
         this.arrivalTime = arrivalTime;
         this.length = length;

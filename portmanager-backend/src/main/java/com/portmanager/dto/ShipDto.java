@@ -1,29 +1,51 @@
 package com.portmanager.dto;
 
 import com.fasterxml.jackson.annotation.JsonAlias;
-import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
-import java.time.OffsetDateTime;
+import java.time.LocalDateTime;
 
 /**
- * ShipDto — unified between UI ↔ backend.
+ * Ship DTO used in REST.
+ * Accepts both "arrival" and "arrivalTime".
  */
-public record ShipDto(
+@JsonIgnoreProperties(ignoreUnknown = true)
+public class ShipDto {
 
-        String id,
-        String name,
-        double length,
-        double draft,
-        String cargoType,
+        private String id;
+        private double length;
+        private double draft;
+        private String cargoType;
 
-        /** UI field = arrivalTime (LocalDateTime); backend keeps OffsetDateTime. */
-        @JsonAlias({"arrivalTime", "arrival"})
-        OffsetDateTime eta,
+        @JsonAlias({"arrival", "arrivalTime"})
+        private LocalDateTime arrivalTime;
 
-        /** Unloading duration, h. */
         @JsonAlias({"estDurationHours", "duration"})
-        double estDurationHours,
+        private double estDurationHours;
 
-        /** Priority tag (optional). */
-        String priority
-) {}
+        private String priority;
+
+        public ShipDto() {}
+
+        /* ---------- getters / setters ---------- */
+        public String getId()                   { return id; }
+        public void   setId(String id)          { this.id = id; }
+
+        public double getLength()               { return length; }
+        public void   setLength(double l)       { this.length = l; }
+
+        public double getDraft()                { return draft; }
+        public void   setDraft(double d)        { this.draft = d; }
+
+        public String getCargoType()            { return cargoType; }
+        public void   setCargoType(String c)    { this.cargoType = c; }
+
+        public LocalDateTime getArrivalTime()   { return arrivalTime; }
+        public void          setArrivalTime(LocalDateTime t) { this.arrivalTime = t; }
+
+        public double getEstDurationHours()     { return estDurationHours; }
+        public void   setEstDurationHours(double h) { this.estDurationHours = h; }
+
+        public String getPriority()             { return priority; }
+        public void   setPriority(String p)     { this.priority = p; }
+}

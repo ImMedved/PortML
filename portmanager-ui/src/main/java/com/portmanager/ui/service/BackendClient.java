@@ -1,6 +1,7 @@
 package com.portmanager.ui.service;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.SerializationFeature;
 import com.portmanager.ui.model.*;
 
 import java.io.IOException;
@@ -31,7 +32,9 @@ public final class BackendClient {
 
     private final String baseUrl;                 // http://host:8080/api
     private final HttpClient http;
-    private static final ObjectMapper JSON = new ObjectMapper().findAndRegisterModules();
+    private static final ObjectMapper JSON = new ObjectMapper()
+            .findAndRegisterModules()
+            .disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);;
 
     private BackendClient() {
         this.baseUrl = resolveBaseUrl();

@@ -6,11 +6,12 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.time.OffsetDateTime;
+import java.time.ZoneOffset;
 import java.util.*;
 
 /**
- * Builds a quick “baseline” schedule locally; for any other algorithm
- * delegates to external ML-service.
+ * Builds a simple “baseline” plan locally; for other algorithms
+ * proxies the request to an external ML service.
  */
 @Service
 @RequiredArgsConstructor
@@ -20,12 +21,9 @@ public class PlanningService {
 
     public PlanResponseDto generatePlan(PlanningRequestDto req) {
 
-        /* baseline → local dummy scheduler */
         if ("baseline".equalsIgnoreCase(req.algorithm())) {
             return buildBaseline(req.scenario());
         }
-
-        /* any other algorithm → proxy to ML service */
         return ml.requestPlan(req.scenario(), req.algorithm());
     }
 
@@ -33,31 +31,37 @@ public class PlanningService {
 
     private PlanResponseDto buildBaseline(ConditionsDto sc) {
 
-        /* greedy FIFO assignment */
         List<ShipDto> queue = new ArrayList<>(sc.ships());
-        queue.sort(Comparator.comparing(ShipDto::eta));
+        queue.sort(
+                Comparator.comparing(
+                        ShipDto::getArrivalTime,
+                        Comparator.nullsLast(Comparator.naturalOrder())
+                )
+        );
 
         Map<Long, OffsetDateTime> nextFree = new HashMap<>();
         List<ScheduleItemDto> out = new ArrayList<>();
 
         for (ShipDto ship : queue) {
 
+            /* если ETA не задана – пропускаем судно */
+            if (ship.getArrivalTime() == null) continue;
+
             Optional<TerminalDto> maybe = sc.terminals().stream()
                     .filter(t -> fits(ship, t))
                     .findFirst();
-
-            if (maybe.isEmpty()) continue;            // ship cannot be handled → skip
+            if (maybe.isEmpty()) continue;
 
             TerminalDto t = maybe.get();
-            OffsetDateTime start = ship.eta();
+            OffsetDateTime start = ship.getArrivalTime().atOffset(ZoneOffset.UTC);
             OffsetDateTime end   = start.plusHours(
-                    (long) Math.ceil(ship.estDurationHours()));
+                    (long) Math.ceil(ship.getEstDurationHours()));
 
             nextFree.put(t.id(), end);
 
             out.add(new ScheduleItemDto(
                     String.valueOf(t.id()),
-                    ship.name(),           // UI treats as vesselId
+                    ship.getId(),
                     start.toString(),
                     end.toString()
             ));
@@ -65,14 +69,16 @@ public class PlanningService {
 
         return PlanResponseDto.builder()
                 .algorithmUsed("baseline")
-                .schedule(out)
                 .ships(sc.ships())
+                .schedule(out)
                 .build();
     }
 
+    /* ---------- helpers ---------- */
+
     private boolean fits(ShipDto s, TerminalDto t) {
-        return s.length() <= t.maxLength()
-                && s.draft() <= t.maxDraft()
-                && t.cargoTypes().contains(s.cargoType());
+        return s.getLength() <= t.maxLength()
+                && s.getDraft() <= t.maxDraft()
+                && t.cargoTypes().contains(s.getCargoType());
     }
 }
