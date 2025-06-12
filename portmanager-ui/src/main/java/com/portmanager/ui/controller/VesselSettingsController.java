@@ -1,5 +1,6 @@
 package com.portmanager.ui.controller;
 
+import com.portmanager.ui.DateTimeStringConverter;
 import com.portmanager.ui.model.ShipDto;
 import javafx.beans.property.ReadOnlyObjectWrapper;
 import javafx.collections.FXCollections;

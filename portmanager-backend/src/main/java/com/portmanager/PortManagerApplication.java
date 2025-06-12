@@ -19,13 +19,6 @@ public class PortManagerApplication {
         this.generatorService = generatorService;
     }
 
-    /** Автоматически создаём дефолтный сценарий,
-     *  чтобы ML сразу получил непустой PlanRequest. */
-    @PostConstruct
-    public void initScenario() {
-        generatorService.generateDefault();   // ← новый метод (см. ниже)
-    }
-
     public static void main(String[] args) {
         SpringApplication.run(PortManagerApplication.class, args);
     }

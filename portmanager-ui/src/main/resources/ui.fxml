@@ -12,8 +12,8 @@
 
             <Label text="Algorithm:"/>
             <ComboBox fx:id="algorithmSelector"/>
-            <Button text="Refresh Plan" onAction="#onRefreshPlan"/>
-            <Button text="Compare Plans" onAction="#onComparePlans"/>
+            <Button text="Refresh Plan" onAction="#onGeneratePlan"/>
+            <Button text="Random Data" onAction="#onRandomData"/>
 
             <Button text="Edit Terminals" onAction="#openTerminalSettings"/>
             <Button text="Edit Vessels" onAction="#openVesselSettings"/>
@@ -27,10 +27,6 @@
             <Label text=" E:"/>
             <Label fx:id="eventCount" text="0"/>
 
-            <HBox spacing="20" alignment="CENTER">
-                <Button fx:id="acceptButton" text="Accept Plan" onAction="#onAcceptPlan" visible="false"/>
-                <Button fx:id="rejectButton" text="Reject Plan" onAction="#onRejectPlan" visible="false"/>
-            </HBox>
         </ToolBar>
     </top>
 
@@ -93,10 +89,6 @@
                                 <GridPane fx:id="planBGrid" hgap="5" vgap="5"/>
                             </ScrollPane>
                         </VBox>
-                    </HBox>
-                    <HBox spacing="20" alignment="CENTER">
-                        <Button text="Choose A" onAction="#onChooseA"/>
-                        <Button text="Choose B" onAction="#onChooseB"/>
                     </HBox>
                 </VBox>
             </Tab>

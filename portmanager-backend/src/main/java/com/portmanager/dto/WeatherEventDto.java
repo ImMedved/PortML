@@ -1,25 +1,20 @@
 package com.portmanager.dto;
 
-import lombok.*;
-import jakarta.validation.constraints.*;
 import java.time.OffsetDateTime;
 
 /**
- * WeatherEventDto
+ * Событие: неблагоприятная погода, закрывающая весь порт.
  *
- * Port-wide or terminal-specific weather impact.
+ * @param start начало
+ * @param end   конец
  */
-@Data
-@NoArgsConstructor
-@AllArgsConstructor
-@Builder(toBuilder = true)
-public class WeatherEventDto {
+public record WeatherEventDto(
+        OffsetDateTime start,
+        OffsetDateTime end
+) implements EventDto {
 
-    @NotNull
-    private OffsetDateTime start;
-
-    @NotNull
-    private OffsetDateTime end;
-
-    private String description;
+    @Override
+    public EventType getEventType() {
+        return EventType.WEATHER;
+    }
 }

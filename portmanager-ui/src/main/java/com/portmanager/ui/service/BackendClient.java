@@ -1,85 +1,133 @@
 package com.portmanager.ui.service;
 
-import com.google.gson.Gson;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.portmanager.ui.model.*;
 
 import java.io.IOException;
 import java.net.URI;
-import java.net.URLEncoder;
 import java.net.http.*;
-import java.nio.charset.StandardCharsets;
-import java.util.List;
+import java.time.Duration;
 import java.util.Optional;
 
-public class BackendClient {
-    private static final String BASE_URL = "http://localhost:8080/api";
-    private final HttpClient client = HttpClient.newHttpClient();
-    private final Gson gson = new Gson();
+/**
+ * REST-клиент к серверу. Singleton.
+ */
+public final class BackendClient {
 
-    public Optional<PlanResponse> generatePlan(String algorithm)
-    {
-        try {
-            //String json = gson.toJson(request);
+    /* ---------- Singleton ---------- */
 
-            HttpRequest httpRequest = HttpRequest.newBuilder()
-                .uri(URI.create(BASE_URL + "/plan?algorithm=" + URLEncoder.encode(algorithm, StandardCharsets.UTF_8)))
-                 .POST(HttpRequest.BodyPublishers.noBody())      // тело не нужно
-                 .build();
+    private static volatile BackendClient INSTANCE;
 
-            HttpResponse<String> response = client.send(httpRequest, HttpResponse.BodyHandlers.ofString());
-            return Optional.of(gson.fromJson(response.body(), PlanResponse.class));
-        } catch (Exception e) {
-            System.err.println("Error while requesting plan: " + e.getMessage());
-            return Optional.empty();
+    public static BackendClient get() {
+        if (INSTANCE == null) {
+            synchronized (BackendClient.class) {
+                if (INSTANCE == null) INSTANCE = new BackendClient();
+            }
         }
+        return INSTANCE;
     }
 
-    public Optional<PairwiseRequest> getPairwisePlans() {
-        try {
-            HttpRequest request = HttpRequest.newBuilder()
-                    .uri(URI.create(BASE_URL + "/compare"))
-                    .GET()
-                    .build();
+    /* ---------- fields ---------- */
 
-            HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
-            return Optional.of(gson.fromJson(response.body(), PairwiseRequest.class));
-        } catch (IOException | InterruptedException e) {
-            System.err.println("Error while getting comparison: " + e.getMessage());
-            return Optional.empty();
-        }
+    private final String baseUrl;                 // http://host:8080/api
+    private final HttpClient http;
+    private static final ObjectMapper JSON = new ObjectMapper().findAndRegisterModules();
+
+    private BackendClient() {
+        this.baseUrl = resolveBaseUrl();
+        this.http = HttpClient.newBuilder()
+                .connectTimeout(Duration.ofSeconds(5))
+                .build();
+        System.out.println("[BackendClient] baseUrl = " + baseUrl);
     }
 
-    public void sendFeedback(String comparisonId, String chosenPlan) {
-        try {
-            PairwiseFeedback feedback = new PairwiseFeedback(comparisonId, chosenPlan);
-            String json = gson.toJson(feedback);
+    /* ==============================================================
+       Публичные методы, которые вызывает AppController
+       ============================================================== */
 
-            HttpRequest request = HttpRequest.newBuilder()
-                    .uri(URI.create(BASE_URL + "/feedback"))
+    /** POST /plan — вернуть Optional c планом */
+    public Optional<PlanResponseDto> generatePlan(ConditionsDto scenario) {
+
+        PlanningRequestDto req = new PlanningRequestDto(scenario, "baseline");
+        HttpRequest request;
+        try {
+            request = HttpRequest.newBuilder()
+                    .uri(URI.create(baseUrl + "/plan"))
                     .header("Content-Type", "application/json")
-                    .POST(HttpRequest.BodyPublishers.ofString(json))
+                    .POST(HttpRequest.BodyPublishers.ofString(JSON.writeValueAsString(req)))
                     .build();
-
-            client.send(request, HttpResponse.BodyHandlers.ofString());
         } catch (Exception e) {
-            System.err.println("Error sending feedback: " + e.getMessage());
-        }
-    }
-
-    public Optional<List<EventDto>> getEvents() {
-        try {
-            HttpRequest request = HttpRequest.newBuilder()
-                    .uri(URI.create(BASE_URL + "/events"))
-                    .GET()
-                    .build();
-
-            HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
-            EventDto[] events = gson.fromJson(response.body(), EventDto[].class);
-            return Optional.of(List.of(events));
-        } catch (IOException | InterruptedException e) {
-            System.err.println("Error while getting events: " + e.getMessage());
+            e.printStackTrace();
             return Optional.empty();
         }
+
+        try {
+            HttpResponse<String> resp =
+                    http.send(request, HttpResponse.BodyHandlers.ofString());
+
+            if (resp.statusCode() == 200 && !resp.body().isBlank()) {
+                return Optional.of(JSON.readValue(resp.body(), PlanResponseDto.class));
+            }
+        } catch (IOException | InterruptedException e) {
+            e.printStackTrace();
+        }
+        return Optional.empty();
     }
 
+    /* ---------- POST /data/generate ---------- */
+    public Optional<ConditionsDto> requestRandomData(int ships) {
+        HttpRequest req = HttpRequest.newBuilder()
+                .uri(URI.create(baseUrl + "/data/generate?ships=" + ships))
+                .POST(HttpRequest.BodyPublishers.noBody())
+                .build();
+        try {
+            HttpResponse<String> resp = http.send(req, HttpResponse.BodyHandlers.ofString());
+            if (resp.statusCode() == 200 && !resp.body().isBlank()) {
+                return Optional.of(JSON.readValue(resp.body(), ConditionsDto.class));
+            }
+        } catch (IOException | InterruptedException e) {
+            e.printStackTrace();
+        }
+        return Optional.empty();
+    }
+
+    /** POST /data/save */
+    public boolean saveDataToDatabase(ConditionsDto scenario) {
+        try {
+            HttpRequest req = HttpRequest.newBuilder()
+                    .uri(URI.create(baseUrl + "/data/save"))
+                    .header("Content-Type", "application/json")
+                    .POST(HttpRequest.BodyPublishers.ofString(JSON.writeValueAsString(scenario)))
+                    .build();
+            http.send(req, HttpResponse.BodyHandlers.discarding());
+            return true;
+        } catch (IOException | InterruptedException e) {
+            e.printStackTrace();
+            return false;
+        }
+    }
+
+    /** На сервере пока нет такого энд-пойнта — вернём пустоту. */
+    public Optional<PlanResponseDto> getLastAcceptedPlan() {
+        return Optional.empty();
+    }
+
+    /* ================= helpers ================= */
+
+    private static String resolveBaseUrl() {
+        String url = System.getProperty("backendUrl");
+        if (url != null && !url.isBlank()) return url.trim();
+        url = System.getenv("UI_BACKEND_URL");
+        if (url != null && !url.isBlank()) return url.trim();
+        try (var is = BackendClient.class.getClassLoader()
+                .getResourceAsStream("config.properties")) {
+            if (is != null) {
+                var p = new java.util.Properties();
+                p.load(is);
+                url = p.getProperty("backend.url");
+                if (url != null && !url.isBlank()) return url.trim();
+            }
+        } catch (Exception ignored) {}
+        return "http://localhost:8080/api";
+    }
 }

@@ -1,25 +1,23 @@
 package com.portmanager.entity;
 
 import jakarta.persistence.*;
-import lombok.*;
+import lombok.Getter;
+import lombok.Setter;
+
 import java.time.OffsetDateTime;
 
-/**
- * ShipEntity
- *
- * Table `ship` – a single vessel call (ETA + physical params).
- */
 @Entity
-@Table(name = "ship")
-@Getter @Setter @NoArgsConstructor @AllArgsConstructor @Builder
+@Table(name = "ships")
+@Getter @Setter
 public class ShipEntity {
 
     @Id
-    private String id;
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
 
-    private OffsetDateTime arrivalTime;
+    private String name;
     private double length;
     private double draft;
     private String cargoType;
-    private double estDurationHours;
+    private OffsetDateTime eta;
 }

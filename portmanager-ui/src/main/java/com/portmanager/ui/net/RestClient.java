@@ -1,7 +1,8 @@
 package com.portmanager.ui.net;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import lombok.RequiredArgsConstructor;
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
+import com.fasterxml.jackson.databind.SerializationFeature;
 import lombok.SneakyThrows;
 
 import java.net.URI;
@@ -9,11 +10,18 @@ import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 
-@RequiredArgsConstructor
 public class RestClient {
     private final String baseUrl;
-    private final HttpClient client = HttpClient.newHttpClient();
-    private final ObjectMapper mapper = new ObjectMapper();
+    private final HttpClient client;
+    private final ObjectMapper mapper;
+
+    public RestClient(String baseUrl) {
+        this.baseUrl = baseUrl;
+        this.client = HttpClient.newHttpClient();
+        this.mapper = new ObjectMapper()
+                .registerModule(new JavaTimeModule())
+                .disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
+    }
 
     @SneakyThrows
     public <T> T post(String path, Object body, Class<T> respType) {
