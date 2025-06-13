@@ -2,6 +2,7 @@ package com.portmanager.ui;
 
 import com.portmanager.ui.board.ManualBoardController;
 import com.portmanager.ui.board.MlBoardController;
+import com.portmanager.ui.controller.ScheduleController;
 import com.portmanager.ui.model.*;
 import com.portmanager.ui.service.BackendClient;
 import javafx.beans.property.SimpleStringProperty;
@@ -10,6 +11,7 @@ import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
+import javafx.scene.layout.AnchorPane;
 import javafx.scene.layout.GridPane;
 import javafx.stage.Stage;
 
@@ -26,6 +28,7 @@ public class AppController {
     @FXML private ComboBox<String> algorithmSelector;
     @FXML private GridPane manualGrid;
     @FXML private GridPane mlGrid;
+    @FXML private ScheduleController scheduleController;
 
     @FXML private Label planInfoLabel, statusLabel;
     @FXML private Label terminalCount, vesselCount, eventCount;
@@ -33,6 +36,8 @@ public class AppController {
     @FXML private TableView<ShipRow> shipTable;
     @FXML private TableColumn<ShipRow, String> shipColumn, arrivalColumn,
             cargoColumn, priorityColumn, lengthColumn, draftColumn, durationColumn;
+
+    @FXML private AnchorPane scheduleRoot;
 
     /* ---------- state ---------- */
     private final BackendClient backend = BackendClient.get();
@@ -52,6 +57,20 @@ public class AppController {
         bindShipTable();
         manualBoard.attach(manualGrid);
         mlBoard.attach(mlGrid);
+
+        try {
+            FXMLLoader loader = new FXMLLoader(
+                    getClass().getResource("/schedule_view.fxml"));
+            AnchorPane pane = loader.load();
+            scheduleController = loader.getController();
+            scheduleRoot.getChildren().setAll(pane);
+            AnchorPane.setTopAnchor (pane, 0.0);
+            AnchorPane.setRightAnchor(pane, 0.0);
+            AnchorPane.setBottomAnchor(pane, 0.0);
+            AnchorPane.setLeftAnchor(pane, 0.0);
+        } catch (IOException ex) {
+            ex.printStackTrace();
+        }
     }
 
     /* ---------- toolbar actions ---------- */
@@ -62,6 +81,7 @@ public class AppController {
         ConditionsDto dto = new ConditionsDto(terminals, ships, events);
 
         backend.generatePlan(dto).ifPresentOrElse(plan -> {
+            scheduleController.renderPlan(plan);
             mlBoard.renderConditions(dto);
             mlBoard.renderPlan(plan);
             planInfoLabel.setText("ID: %s · %s".formatted(plan.getScenarioId(), plan.getAlgorithmUsed()));

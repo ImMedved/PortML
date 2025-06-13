@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+
+<AnchorPane xmlns:fx="http://javafx.com/fxml"
+            fx:controller="com.portmanager.ui.controller.ScheduleController">
+    <TableView fx:id="scheduleTable" AnchorPane.topAnchor="0"
+               AnchorPane.bottomAnchor="0" AnchorPane.leftAnchor="0"
+               AnchorPane.rightAnchor="0">
+        <columns>
+            <TableColumn fx:id="terminalColumn" text="Terminal"/>
+            <TableColumn fx:id="intervalColumn" text="Interval"/>
+        </columns>
+    </TableView>
+</AnchorPane>

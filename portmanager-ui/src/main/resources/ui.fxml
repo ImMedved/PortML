@@ -1,21 +1,21 @@
 <?xml version="1.0" encoding="UTF-8"?>
-
 <?import javafx.scene.control.*?>
 <?import javafx.scene.layout.*?>
+<?import javafx.fxml.*?>
 
 <BorderPane xmlns:fx="http://javafx.com/fxml"
             fx:controller="com.portmanager.ui.AppController">
 
-    <!-- ─────────── top toolbar ─────────── -->
+    <!-- ───── top toolbar ───── -->
     <top>
         <ToolBar>
-            <Label fx:id="planInfoLabel" text="ID: -" style="-fx-font-weight:bold;" />
+            <Label fx:id="planInfoLabel" text="ID: -" style="-fx-font-weight:bold;"/>
 
             <Label text="Algorithm:"/>
             <ComboBox fx:id="algorithmSelector"/>
 
-            <Button text="Refresh Plan"  onAction="#onGeneratePlan"/>
-            <Button text="Random Data"   onAction="#onRandomData"/>
+            <Button text="Refresh Plan" onAction="#onGeneratePlan"/>
+            <Button text="Random Data"  onAction="#onRandomData"/>
 
             <Button text="Edit Terminals" onAction="#openTerminalSettings"/>
             <Button text="Edit Vessels"   onAction="#openVesselSettings"/>
@@ -28,10 +28,10 @@
         </ToolBar>
     </top>
 
-    <!-- ─────────── center ─────────── -->
+    <!-- ───── center ───── -->
     <center>
-        <SplitPane dividerPositions="0.65">
-            <!-- left (two boards) -->
+        <SplitPane dividerPositions="0.68">
+            <!-- left: two plan boards -->
             <VBox spacing="6">
                 <Label text="Manual plan"/>
                 <ScrollPane fitToWidth="true" fitToHeight="true">
@@ -44,24 +44,28 @@
                 <ScrollPane fitToWidth="true" fitToHeight="true">
                     <GridPane fx:id="mlGrid" hgap="3" vgap="3"/>
                 </ScrollPane>
+
+                <Separator/>
+
+                <!-- таблица-расписание -->
+                <AnchorPane fx:id="scheduleRoot"/>
             </VBox>
 
-            <!-- right (ship table + events) -->
+            <!-- right: ships + status -->
             <VBox spacing="6" style="-fx-padding:6;">
                 <TableView fx:id="shipTable" prefHeight="400">
                     <columns>
-                        <TableColumn fx:id="arrivalColumn" text="Arrival"/>
-                        <TableColumn fx:id="shipColumn"    text="Vessel"/>
-                        <TableColumn fx:id="cargoColumn"   text="Cargo"/>
+                        <TableColumn fx:id="arrivalColumn"  text="Arrival"/>
+                        <TableColumn fx:id="shipColumn"     text="Vessel"/>
+                        <TableColumn fx:id="cargoColumn"    text="Cargo"/>
                         <TableColumn fx:id="priorityColumn" text="Priority"/>
-                        <TableColumn fx:id="lengthColumn"  text="Len m"/>
-                        <TableColumn fx:id="draftColumn"   text="Draft m"/>
+                        <TableColumn fx:id="lengthColumn"   text="Len m"/>
+                        <TableColumn fx:id="draftColumn"    text="Draft m"/>
                         <TableColumn fx:id="durationColumn" text="Hours"/>
                     </columns>
                 </TableView>
 
                 <Separator/>
-                <Label text="Conditions"/>
                 <Label fx:id="statusLabel" text="Ready"/>
             </VBox>
         </SplitPane>
