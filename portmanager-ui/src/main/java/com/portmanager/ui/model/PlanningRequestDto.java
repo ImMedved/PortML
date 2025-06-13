@@ -1,8 +1,8 @@
 package com.portmanager.ui.model;
 
 /**
- * Такая же структура, что и на сервере,
- * но использует UI-DTO (ConditionsDto из пакета ui.model).
+ * Same as on server
+ * but with UI-DTO (ConditionsDto from ui.model).
  */
 public record PlanningRequestDto(
         ConditionsDto scenario,

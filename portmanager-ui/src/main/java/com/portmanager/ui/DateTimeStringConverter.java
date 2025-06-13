@@ -7,14 +7,14 @@ import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
 
 /**
- * Конвертер для редактируемых ячеек TableView – переводит
- * {@link LocalDateTime} ⇄ строку формата  {@code yyyy-MM-dd HH:mm}.
+ * Converter for editable cells of TableView – translate
+ * {@link LocalDateTime} ⇄ into string format  {@code yyyy-MM-dd HH:mm}.
  *
- * Пример текста, который «понимает» конвертер:  {@code 2025-06-14 08:30}
+ * Text example for converter:  {@code 2025-06-14 08:30}
  */
 public class DateTimeStringConverter extends StringConverter<LocalDateTime> {
 
-    /** Универсальный шаблон без часового пояса. */
+    /** Shema without timezone. */
     private static final DateTimeFormatter FMT =
             DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm");
 
@@ -29,7 +29,7 @@ public class DateTimeStringConverter extends StringConverter<LocalDateTime> {
         try {
             return LocalDateTime.parse(text.trim(), FMT);
         } catch (DateTimeParseException ex) {
-            // неверный формат → null, чтобы TableView не падал
+            // incorrect format → null, for TableView not fall
             return null;
         }
     }

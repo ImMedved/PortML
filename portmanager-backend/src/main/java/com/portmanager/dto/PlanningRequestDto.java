@@ -1,10 +1,10 @@
 package com.portmanager.dto;
 
 /**
- * Запрос на построение плана.
+ * Request to build a plan.
  *
- * @param scenario  полный сценарий (терминалы + суда + события)
- * @param algorithm название алгоритма (baseline, rl и т.п.)
+ * @param scenario full scenario (terminals + vessels + events)
+ * @param algorithm algorithm name (baseline, rl, etc.)
  */
 public record PlanningRequestDto(
         ConditionsDto scenario,

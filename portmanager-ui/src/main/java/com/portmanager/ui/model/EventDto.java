@@ -1,15 +1,19 @@
 package com.portmanager.ui.model;
 
+import com.fasterxml.jackson.annotation.JsonAlias;
+import com.fasterxml.jackson.annotation.JsonProperty;
+
 import java.time.LocalDateTime;
 
 public class EventDto {
 
-    public enum EventType {
-        WEATHER,
-        TERMINAL_CLOSURE
-    }
+    public enum EventType { WEATHER, TERMINAL_CLOSURE }
 
-    private EventType type;
+    /** Serialize exactly as "eventType", tolerate old "type" on input */
+    @JsonProperty("eventType")
+    @JsonAlias("type")
+    private EventType eventType;
+
     private LocalDateTime start;
     private LocalDateTime end;
     private String description;
@@ -17,30 +21,29 @@ public class EventDto {
 
     public EventDto() {}
 
-    public EventDto(EventType type, LocalDateTime start, LocalDateTime end, String description) {
-        this.type = type;
-        this.start = start;
-        this.end = end;
-        this.description = description;
+    public EventDto(EventType t, LocalDateTime s, LocalDateTime e, String d) {
+        this.eventType = t;
+        this.start = s;
+        this.end = e;
+        this.description = d;
     }
 
-    public EventType getType() { return type; }
-    public void setType(EventType type) { this.type = type; }
+    /* ---------- getters / setters ---------- */
+    public EventType getEventType()            { return eventType; }
+    public void      setEventType(EventType t) { this.eventType = t; }
 
-    public LocalDateTime getStart() { return start; }
-    public void setStart(LocalDateTime start) { this.start = start; }
+    public EventType getType()                 { return eventType; }
+    public void      setType(EventType t)      { this.eventType = t; }
 
-    public LocalDateTime getEnd() { return end; }
-    public void setEnd(LocalDateTime end) { this.end = end; }
+    public LocalDateTime getStart()            { return start; }
+    public void         setStart(LocalDateTime s) { this.start = s; }
 
-    public String getDescription() { return description; }
-    public void setDescription(String description) { this.description = description; }
+    public LocalDateTime getEnd()              { return end; }
+    public void         setEnd(LocalDateTime e)   { this.end = e; }
 
-    public String getTerminalId() {
-        return terminalId;
-    }
+    public String getDescription()             { return description; }
+    public void   setDescription(String d)     { this.description = d; }
 
-    public void setTerminalId(String terminalId) {
-        this.terminalId = terminalId;
-    }
+    public String getTerminalId()              { return terminalId; }
+    public void   setTerminalId(String id)     { this.terminalId = id; }
 }

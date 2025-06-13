@@ -20,7 +20,7 @@ public class TerminalEntity {
     private double maxLength;
     private double maxDraft;
 
-    /** Перечень грузов, которые может обрабатывать терминал. */
+    /** List of cargoes that the terminal can handle. */
     @ElementCollection(fetch = FetchType.EAGER)
     @CollectionTable(name = "terminal_cargo_types",
             joinColumns = @JoinColumn(name = "terminal_id"))

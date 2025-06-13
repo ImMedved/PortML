@@ -10,6 +10,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.OffsetDateTime;
+import java.time.ZoneOffset;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -25,7 +26,7 @@ public class DataService {
     private final TerminalMapper terminalMapper;
     private final ShipMapper      shipMapper;
 
-    /* ---------- сохранение сценария (уже сделано ранее) ---------- */
+    /* ---------- save script ---------- */
 
     @Transactional
     public void overwriteWithUserData(ConditionsDto dto) {
@@ -46,26 +47,30 @@ public class DataService {
 
         for (EventDto ev : dto.events()) {
             switch (ev.getEventType()) {
+
                 case TERMINAL_CLOSURE -> {
-                    var e = (TerminalClosureEventDto) ev;
-                    var entity = new TerminalClosureEntity();
-                    entity.setTerminalId(e.terminalId());
-                    entity.setStartTime(e.start());
-                    entity.setEndTime(e.end());
-                    closureRepo.save(entity);
+                    var src = (TerminalClosureEventDto) ev;
+                    var ent = new TerminalClosureEntity();
+                    ent.setTerminalId(src.terminalId());
+                    ent.setStartTime(src.start().atOffset(ZoneOffset.UTC));
+                    ent.setEndTime  (src.end().atOffset(ZoneOffset.UTC));
+                    ent.setReason   (src.description());          // ← добавили
+                    closureRepo.save(ent);
                 }
+
                 case WEATHER -> {
-                    var w = (WeatherEventDto) ev;
-                    var entity = new WeatherEventEntity();
-                    entity.setStartTime(w.start());
-                    entity.setEndTime(w.end());
-                    weatherRepo.save(entity);
+                    var src = (WeatherEventDto) ev;
+                    var ent = new WeatherEventEntity();
+                    ent.setStartTime(src.start().atOffset(ZoneOffset.UTC));   // ←
+                    ent.setEndTime  (src.end().atOffset(ZoneOffset.UTC));   // ←
+                    ent.setDescription(src.description());
+                    weatherRepo.save(ent);
                 }
             }
         }
     }
 
-    /* ---------- новый единый снимок ---------- */
+    /* ---------- new single snapshot ---------- */
 
     @Transactional(readOnly = true)
     public ConditionsDto getCurrentConditions() {
@@ -80,19 +85,22 @@ public class DataService {
 
         List<EventDto> events = closureRepo.findAll().stream()
                 .<EventDto>map(c -> new TerminalClosureEventDto(
-                        c.getTerminalId(), c.getStartTime(), c.getEndTime()))
+                        c.getTerminalId(), c.getStartTime().toLocalDateTime(), c.getEndTime().toLocalDateTime(),
+                        c.getReason()))
                 .collect(Collectors.toList());
 
         events.addAll(
                 weatherRepo.findAll().stream()
                         .map(w -> (EventDto) new WeatherEventDto(
-                                w.getStartTime(), w.getEndTime()))
+                                w.getStartTime().toLocalDateTime(),
+                                w.getEndTime().toLocalDateTime(),
+                                w.getDescription()))
                         .toList());
 
         return new ConditionsDto(terminals, ships, events);
     }
 
-    /* ---------- вспомогательные методы (могут использоваться другими сервисами) ---------- */
+    /* ---------- helper methods (can be used by other services) ---------- */
 
     @Transactional(readOnly = true)
     public List<ShipDto> mapShipsToDto() {

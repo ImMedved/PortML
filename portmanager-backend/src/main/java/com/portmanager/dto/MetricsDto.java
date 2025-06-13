@@ -5,8 +5,6 @@ import jakarta.validation.constraints.*;
 import java.util.Map;
 
 /**
- * MetricsDto
- *
  * Aggregated KPI values for a generated plan.
  */
 @Data

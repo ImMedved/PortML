@@ -15,12 +15,12 @@ public class TerminalClosureEntity {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    /** ID терминала, который закрывается  */
+    /** ID of the terminal being closed */
     private Long terminalId;
 
     private OffsetDateTime startTime;
     private OffsetDateTime endTime;
 
-    /** Доп. описание (optional). */
+    /** Additional description (optional). */
     private String reason;
 }

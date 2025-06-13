@@ -1,6 +1,7 @@
 package com.portmanager.ui.controller;
 
 import com.portmanager.ui.DateTimeStringConverter;
+import com.portmanager.ui.cells.DateTimePickerTableCell;
 import com.portmanager.ui.model.EventDto;
 import com.portmanager.ui.model.EventDto.EventType;
 import javafx.beans.property.ReadOnlyObjectWrapper;
@@ -43,12 +44,12 @@ public class EventsSettingsController implements SettingsResult<EventDto> {
         descriptionColumn.setCellFactory(TextFieldTableCell.forTableColumn());
         descriptionColumn.setOnEditCommit(e -> e.getRowValue().setDescription(e.getNewValue()));
 
-        startColumn.setCellFactory(TextFieldTableCell.forTableColumn(new DateTimeStringConverter()));
+        startColumn.setCellFactory(col -> new DateTimePickerTableCell<>());
         startColumn.setOnEditCommit(e -> e.getRowValue().setStart(e.getNewValue()));
         endColumn.setOnEditCommit(e -> e.getRowValue().setEnd(e.getNewValue()));
         terminalIdColumn.setOnEditCommit(e -> e.getRowValue().setTerminalId(e.getNewValue()));
 
-        endColumn.setCellFactory(TextFieldTableCell.forTableColumn(new DateTimeStringConverter()));
+        endColumn.setCellFactory(col -> new DateTimePickerTableCell<>());
         terminalIdColumn.setCellFactory(TextFieldTableCell.forTableColumn());
 
         eventTable.setItems(eventList);

@@ -14,3 +14,8 @@ https://docs.aws.amazon.com/corretto/latest/corretto-21-ug/downloads-list.html
 
 Docker is needed. 
 Java 17+ is needed. 
+
+
+If error while build:
+Failed to execute goal on project portmanager-backend: Could not resolve dependencies for project com.portmanager:portmanager-backend:jar:1.0-SNAPSHOT
+delete all docker data, images, containers and db and docker compose up --build

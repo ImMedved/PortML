@@ -5,8 +5,6 @@ import lombok.*;
 import java.time.OffsetDateTime;
 
 /**
- * WeatherEventEntity
- *
  * Table `weather_event` – port-wide event that blocks operations.
  */
 @Entity

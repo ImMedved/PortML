@@ -4,8 +4,8 @@ import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
 
 /**
- * Базовый интерфейс для всех событий.
- * Полиморфная сериализация → в JSON всегда есть поле "eventType".
+ * Base interface for all events.
+ * Polymorphic serialization → JSON always has an "eventType" field.
  */
 @JsonTypeInfo(use = JsonTypeInfo.Id.NAME,
         include = JsonTypeInfo.As.PROPERTY,

@@ -1,6 +1,7 @@
 package com.portmanager.ui.controller;
 
 import com.portmanager.ui.DateTimeStringConverter;
+import com.portmanager.ui.cells.DateTimePickerTableCell;
 import com.portmanager.ui.model.ShipDto;
 import javafx.beans.property.ReadOnlyObjectWrapper;
 import javafx.collections.FXCollections;
@@ -52,7 +53,7 @@ public class VesselSettingsController implements SettingsResult<ShipDto> {
         cargoColumn.setCellFactory(ComboBoxTableCell.forTableColumn(FXCollections.observableArrayList(CARGO_TYPES)));
         cargoColumn.setOnEditCommit(e -> e.getRowValue().setCargoType(e.getNewValue()));
 
-        arrivalColumn.setCellFactory(TextFieldTableCell.forTableColumn(new DateTimeStringConverter()));
+        arrivalColumn.setCellFactory(col -> new DateTimePickerTableCell<>());
         arrivalColumn.setOnEditCommit(e -> e.getRowValue().setArrival(e.getNewValue()));
 
         durationColumn.setCellFactory(TextFieldTableCell.forTableColumn());

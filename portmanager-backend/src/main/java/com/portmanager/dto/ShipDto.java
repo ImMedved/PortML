@@ -1,22 +1,51 @@
 package com.portmanager.dto;
 
-import java.time.OffsetDateTime;
+import com.fasterxml.jackson.annotation.JsonAlias;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+
+import java.time.LocalDateTime;
 
 /**
- * Судно, ожидающее швартовки.
- *
- * @param id        первичный ключ (0/ null для нового)
- * @param name      идентификатор (V123, MSC Aurora …)
- * @param length    длина, м
- * @param draft     осадка, м
- * @param cargoType тип груза
- * @param eta       расчетное время прибытия (UTC)
+ * Ship DTO used in REST.
+ * Accepts both "arrival" and "arrivalTime".
  */
-public record ShipDto(
-        Long id,
-        String name,
-        double length,
-        double draft,
-        String cargoType,
-        OffsetDateTime eta
-) {}
+@JsonIgnoreProperties(ignoreUnknown = true)
+public class ShipDto {
+
+        private String id;
+        private double length;
+        private double draft;
+        private String cargoType;
+
+        @JsonAlias({"arrival", "arrivalTime"})
+        private LocalDateTime arrivalTime;
+
+        @JsonAlias({"estDurationHours", "duration"})
+        private double estDurationHours;
+
+        private String priority;
+
+        public ShipDto() {}
+
+        /* ---------- getters / setters ---------- */
+        public String getId()                   { return id; }
+        public void   setId(String id)          { this.id = id; }
+
+        public double getLength()               { return length; }
+        public void   setLength(double l)       { this.length = l; }
+
+        public double getDraft()                { return draft; }
+        public void   setDraft(double d)        { this.draft = d; }
+
+        public String getCargoType()            { return cargoType; }
+        public void   setCargoType(String c)    { this.cargoType = c; }
+
+        public LocalDateTime getArrivalTime()   { return arrivalTime; }
+        public void          setArrivalTime(LocalDateTime t) { this.arrivalTime = t; }
+
+        public double getEstDurationHours()     { return estDurationHours; }
+        public void   setEstDurationHours(double h) { this.estDurationHours = h; }
+
+        public String getPriority()             { return priority; }
+        public void   setPriority(String p)     { this.priority = p; }
+}

@@ -1,34 +1,35 @@
 package com.portmanager.dto;
 
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 import lombok.*;
-import jakarta.validation.constraints.*;
+
 import java.util.List;
 
 /**
- * PlanResponseDto
- *
- * Returned by ML service and forwarded to UI. Contains the full schedule and KPI metrics.,
- * And ship list
+ * PlanResponseDto — structure consumed by the UI.
+ * Schedule uses plain strings identical to UI DTO.
  */
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-@Builder
+@Builder(toBuilder = true)
 public class PlanResponseDto {
-    private List<TerminalClosureDto> terminalClosures;
-    private List<WeatherEventDto> weatherEvents;
 
-    @NotNull
-    private List<AssignmentDto> schedule;
+    /** Algorithm actually used (“baseline”, “boosting”, “RL” …). */
+    @NotBlank
+    private String algorithmUsed;
 
+    /** Optional scenario identifier (string for UI compatibility). */
+    private String scenarioId;
+
+    /** Full berth-occupation schedule. */
     @NotNull
+    private List<ScheduleItemDto> schedule;
+
+    /** Optional KPI block (may be null for baseline). */
     private MetricsDto metrics;
 
-    // Mirrors the enum value actually used by ML
-    private com.portmanager.model.PlanningAlgorithm algorithmUsed;
-
-    private Integer scenarioId;
-
-    @NotNull
+    /** Echo of ships list — handy for UI to refresh its table instantly. */
     private List<ShipDto> ships;
 }

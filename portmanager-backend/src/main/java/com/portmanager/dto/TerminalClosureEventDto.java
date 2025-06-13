@@ -1,18 +1,24 @@
 package com.portmanager.dto;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+
+import java.time.LocalDateTime;
 import java.time.OffsetDateTime;
 
 /**
- * Событие: ремонт / закрытие конкретного терминала.
+ * Event: repair/closing of a specific terminal.
  *
- * @param terminalId id терминала
- * @param start      начало закрытия
- * @param end        конец закрытия
+ * @param terminalId terminal id
+ * @param start start of closing
+ * @param end end of closing
  */
+@JsonIgnoreProperties(ignoreUnknown = true)
 public record TerminalClosureEventDto(
         long terminalId,
-        OffsetDateTime start,
-        OffsetDateTime end
+        LocalDateTime start,
+        LocalDateTime end,
+        String description
+
 ) implements EventDto {
 
     @Override

@@ -12,7 +12,8 @@ import java.util.List;
 import java.util.Random;
 
 /**
- * Генерирует демонстрационный набор данных для UI.
+ * Produces a *valid* random scenario: every generated vessel can be processed
+ * at least by one terminal (by length, draft and cargo type).
  */
 @Service
 @RequiredArgsConstructor
@@ -28,49 +29,46 @@ public class ScenarioGeneratorService {
     @Transactional
     public void generate(int shipCount) {
 
-        /* очистка */
+        /* wipe previous data */
         closureRepo.deleteAllInBatch();
         weatherRepo.deleteAllInBatch();
         shipRepo.deleteAllInBatch();
         terminalRepo.deleteAllInBatch();
 
-        /* ---------- терминалы ---------- */
-        TerminalEntity t1 = new TerminalEntity();
-        t1.setName("T1");
-        t1.setMaxLength(300);
-        t1.setMaxDraft(12);
-        t1.setCargoTypes(List.of("container", "general"));
+        /* -------- terminals -------- */
+        TerminalEntity t1 = term("T1", 300, 12, List.of("container", "general"));
+        TerminalEntity t2 = term("T2", 260, 11, List.of("oil", "bulk"));
+        TerminalEntity t3 = term("T3", 400, 15, List.of("container"));
 
-        TerminalEntity t2 = new TerminalEntity();
-        t2.setName("T2");
-        t2.setMaxLength(250);
-        t2.setMaxDraft(10);
-        t2.setCargoTypes(List.of("oil", "bulk"));
+        var terminals = terminalRepo.saveAll(List.of(t1, t2, t3));
 
-        TerminalEntity t3 = new TerminalEntity();
-        t3.setName("T3");
-        t3.setMaxLength(400);
-        t3.setMaxDraft(15);
-        t3.setCargoTypes(List.of("container"));
-
-        terminalRepo.saveAll(List.of(t1, t2, t3));
-
-        /* ---------- суда ---------- */
+        /* -------- ships -------- */
         OffsetDateTime horizon = OffsetDateTime.now(ZoneOffset.UTC).withHour(0);
 
         for (int i = 1; i <= shipCount; i++) {
+            TerminalEntity target = terminals.get(rnd.nextInt(terminals.size()));
+
             ShipEntity v = new ShipEntity();
             v.setName("V" + i);
-            v.setLength(150 + rnd.nextDouble(200));
-            v.setDraft(7 + rnd.nextDouble(5));
-            v.setCargoType(rnd.nextBoolean() ? "container" : "bulk");
+
+            // length & draft guaranteed to fit chosen terminal
+            v.setLength(target.getMaxLength() * (0.5 + 0.4 * rnd.nextDouble()));
+            v.setDraft( Math.min(target.getMaxDraft() - 0.5,
+                    5 + rnd.nextDouble() * 4) );
+            v.setCargoType(target.getCargoTypes()
+                    .get(rnd.nextInt(target.getCargoTypes().size())));
+
             v.setEta(horizon.plusHours(rnd.nextInt(7 * 24)));
+
+            v.setEstDurationHours(4 + rnd.nextInt(8));           // 4-11 h
+            v.setPriority(rnd.nextBoolean() ? "normal" : "high");
+
             shipRepo.save(v);
         }
 
-        /* ---------- события ---------- */
+        /* -------- events -------- */
         TerminalClosureEntity closure = new TerminalClosureEntity();
-        closure.setTerminalId(t2.getId());     // закроем T2
+        closure.setTerminalId(t2.getId());
         closure.setStartTime(horizon.plusDays(2));
         closure.setEndTime(horizon.plusDays(2).plusHours(12));
         closureRepo.save(closure);
@@ -78,6 +76,17 @@ public class ScenarioGeneratorService {
         WeatherEventEntity storm = new WeatherEventEntity();
         storm.setStartTime(horizon.plusDays(3).withHour(18));
         storm.setEndTime(horizon.plusDays(3).withHour(23));
+        storm.setDescription("Storm");
         weatherRepo.save(storm);
+    }
+
+    /* —— helpers —— */
+    private TerminalEntity term(String name, double len, double draft, List<String> types) {
+        TerminalEntity e = new TerminalEntity();
+        e.setName(name);
+        e.setMaxLength(len);
+        e.setMaxDraft(draft);
+        e.setCargoTypes(types);
+        return e;
     }
 }

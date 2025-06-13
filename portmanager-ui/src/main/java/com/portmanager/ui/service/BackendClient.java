@@ -1,6 +1,7 @@
 package com.portmanager.ui.service;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.SerializationFeature;
 import com.portmanager.ui.model.*;
 
 import java.io.IOException;
@@ -10,7 +11,7 @@ import java.time.Duration;
 import java.util.Optional;
 
 /**
- * REST-клиент к серверу. Singleton.
+ * REST-client to server. Singleton.
  */
 public final class BackendClient {
 
@@ -31,7 +32,9 @@ public final class BackendClient {
 
     private final String baseUrl;                 // http://host:8080/api
     private final HttpClient http;
-    private static final ObjectMapper JSON = new ObjectMapper().findAndRegisterModules();
+    private static final ObjectMapper JSON = new ObjectMapper()
+            .findAndRegisterModules()
+            .disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);;
 
     private BackendClient() {
         this.baseUrl = resolveBaseUrl();
@@ -42,10 +45,10 @@ public final class BackendClient {
     }
 
     /* ==============================================================
-       Публичные методы, которые вызывает AppController
+       Public method to call AppController
        ============================================================== */
 
-    /** POST /plan — вернуть Optional c планом */
+    /** POST /plan — return Optional with plan */
     public Optional<PlanResponseDto> generatePlan(ConditionsDto scenario) {
 
         PlanningRequestDto req = new PlanningRequestDto(scenario, "baseline");
@@ -107,7 +110,7 @@ public final class BackendClient {
         }
     }
 
-    /** На сервере пока нет такого энд-пойнта — вернём пустоту. */
+    /** Outdated dummy, idk implement it or not. */
     public Optional<PlanResponseDto> getLastAcceptedPlan() {
         return Optional.empty();
     }
