@@ -14,7 +14,7 @@
             <Label text="Algorithm:"/>
             <ComboBox fx:id="algorithmSelector"/>
 
-            <Button text="Refresh Plan" onAction="#onGeneratePlan"/>
+            <Button text="Generate Plan" onAction="#onGeneratePlan"/>
             <Button text="Random Data"  onAction="#onRandomData"/>
 
             <Button text="Edit Terminals" onAction="#openTerminalSettings"/>

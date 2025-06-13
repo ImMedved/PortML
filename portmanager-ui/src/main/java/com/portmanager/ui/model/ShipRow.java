@@ -1,39 +1,23 @@
 package com.portmanager.ui.model;
 
-import java.util.Map;
-
 public class ShipRow {
+
     private final ShipDto dto;
 
-    public ShipRow(Map<String, Object> json) {
-        this.dto = ShipDto.fromJson(json);
-    }
+    /* Новый удобный конструктор  */
+    public ShipRow(ShipDto dto) { this.dto = dto; }
 
-    public ShipDto getDto() {
-        return dto;
-    }
+    /* ------------- getters, гарантированно null-safe ------------- */
+    private static String s(Object o) { return o == null ? "" : o.toString(); }
 
-    public String getVesselId() {
-        return dto.getId();
-    }
+    public String getVesselId()   { return s(dto.getId()); }
+    public String getArrivalTime(){ return s(dto.getArrivalTime()); }
+    public String getCargoType()  { return s(dto.getCargoType()); }
+    public String getPriority()   { return s(dto.getPriority()); }
+    public String getLength()     { return s(dto.getLength()); }
+    public String getDraft()      { return s(dto.getDraft()); }
+    public String getDuration()   { return s(dto.getEstDurationHours()); }
 
-    public String getArrivalTime() {
-        return dto.getArrivalTime().toString();
-    }
-
-    public String getCargoType() {
-        return dto.getCargoType();
-    }
-
-    public String getPriority() {
-        return dto.getPriority();
-    }
-
-    public String getLength() {
-        return String.valueOf(dto.getLength());
-    }
-
-    public String getDraft() { return String.valueOf(dto.getDraft()); }
-
-    public String getDuration() { return String.valueOf(dto.getEstDurationHours()); }
+    /* ------------- вспомогательный доступ к исходному dto ---------- */
+    public ShipDto getDto() { return dto; }
 }

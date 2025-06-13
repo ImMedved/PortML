@@ -1,3 +1,8 @@
+The project creates a schedule of mooring of ships in the port. Ships, terminals in the port and events that can close part or all of the terminals have many fields that affect the plan, which can be seen in the UI. The data is configured via the Edit buttons in the UI.
+Note: when generating random data, the generator does not fill in the ship's arrival date, so for a correct test, you need to enter this data manually.
+
+The project may have many shortcomings, bugs and not all systems work fully. The project is in the process of being finalized.
+
 To run:
 1. Go to portmanager-ui 
 2. mvn clean package
