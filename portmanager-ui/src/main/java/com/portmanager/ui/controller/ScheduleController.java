@@ -27,6 +27,10 @@ public class ScheduleController {
         scheduleTable.setItems(rows);
     }
 
+    public TableView<ScheduleRow> getScheduleTable() {
+        return scheduleTable;
+    }
+
     /** Called from AppController after plan is received. */
     public void renderPlan(PlanResponseDto dto) {
         rows.clear();

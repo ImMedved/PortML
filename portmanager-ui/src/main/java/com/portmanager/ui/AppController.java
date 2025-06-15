@@ -47,6 +47,11 @@ public class AppController {
     @FXML private TableColumn<ShipRow, String> draftColumn;
     @FXML private TableColumn<ShipRow, String> durationColumn;
 
+    @FXML private ScrollPane manualScroll;
+    @FXML private ScrollPane mlScroll;
+    private PlanResponseDto lastPlan;
+    private double slotWidth = 60;
+
     private final BackendClient backendClient = BackendClient.get();
     private static final int SLOT_WIDTH = 60;
 
@@ -66,6 +71,10 @@ public class AppController {
         lengthColumn.setCellValueFactory(d -> new SimpleStringProperty(d.getValue().getLength()));
         draftColumn.setCellValueFactory(d -> new SimpleStringProperty(d.getValue().getDraft()));
         durationColumn.setCellValueFactory(d -> new SimpleStringProperty(d.getValue().getDuration()));
+
+        manualScroll.viewportBoundsProperty().addListener((obs, oldVal, newVal) -> {
+            if (lastPlan != null) drawPlanTimeline(lastPlan);
+        });
 
         shipTable.setOnMouseClicked(e -> Optional.ofNullable(shipTable.getSelectionModel().getSelectedItem())
                 .ifPresent(s -> ShipInfoDialog.show(s.getDto())));
@@ -89,8 +98,10 @@ public class AppController {
         ConditionsDto dto = new ConditionsDto(manualTerminals, manualShips, manualEvents);
         backendClient.generatePlan(dto).ifPresentOrElse(plan -> {
             scheduleController.renderPlan(plan);
+            autoSizeScheduleTable();
             drawPlanTimeline(plan);
             planInfoLabel.setText("ID: " + plan.getScenarioId() + " · " + plan.getAlgorithmUsed());
+            lastPlan = plan;
             setStatus("Ready");
         }, () -> {
             setStatus("Failed to get plan");
@@ -164,7 +175,6 @@ public class AppController {
         alert.showAndWait();
     }
     private void drawPlanTimeline(PlanResponseDto plan) {
-
         /* same borders by ships + events */
         LocalDateTime min = null, max = null;
 
@@ -181,6 +191,12 @@ public class AppController {
         if (min == null || max == null) return;        // empty set
 
         long hoursTotal = ChronoUnit.HOURS.between(min, max) + 1;
+
+        /* width of 1 slot so that the whole scale fits */
+        double available = manualScroll.getWidth() > 0
+                ? manualScroll.getWidth() - 80          // 80 px - 1st column (terminal names)
+                : 800;                                  // fallback to first layout
+        slotWidth = Math.max(20, available / hoursTotal);   // ≥20 px so that the blocks do not disappear
 
         /* grid */
         prepareGrid(manualGrid, hoursTotal);
@@ -224,7 +240,7 @@ public class AppController {
         /* 0th column for terminal name */
         grid.getColumnConstraints().add(new ColumnConstraints(80));
         for (int c = 0; c < hoursTotal; c++)
-            grid.getColumnConstraints().add(new ColumnConstraints(SLOT_WIDTH));
+            grid.getColumnConstraints().add(new ColumnConstraints(slotWidth));
 
         grid.getRowConstraints().clear();
         for (int r = 0; r < manualTerminals.size(); r++) {
@@ -261,7 +277,7 @@ public class AppController {
     private void addBlock(GridPane g, int row, int c0, int span, String css, String text) {
         Label b = new Label(text);
         b.setStyle(css);
-        b.setMinWidth((double) SLOT_WIDTH * span);
+        b.setMinWidth(slotWidth * span);
         b.setMaxWidth(Region.USE_PREF_SIZE);
         GridPane.setRowIndex(b, row);
         GridPane.setColumnIndex(b, c0);
@@ -278,5 +294,17 @@ public class AppController {
                     DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm")
             );
         }
+    }
+
+    private void autoSizeScheduleTable() {
+        TableView<?> tv = scheduleController.getScheduleTable();
+        tv.setFixedCellSize(26); // row hight
+        tv.prefHeightProperty().bind(
+                tv.fixedCellSizeProperty().multiply(
+                        javafx.beans.binding.Bindings.size(tv.getItems()).add(1.01)
+                )
+        );
+        tv.minHeightProperty().bind(tv.prefHeightProperty());
+        tv.maxHeightProperty().bind(tv.prefHeightProperty());
     }
 }

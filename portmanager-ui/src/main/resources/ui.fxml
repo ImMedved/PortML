@@ -34,14 +34,14 @@
             <!-- left: two plan boards -->
             <VBox spacing="6">
                 <Label text="Manual plan"/>
-                <ScrollPane fitToWidth="true" fitToHeight="true">
+                <ScrollPane fx:id="manualScroll" fitToWidth="true" fitToHeight="true">
                     <GridPane fx:id="manualGrid" hgap="3" vgap="3"/>
                 </ScrollPane>
 
                 <Separator/>
 
                 <Label text="ML plan"/>
-                <ScrollPane fitToWidth="true" fitToHeight="true">
+                <ScrollPane fx:id="mlScroll" fitToWidth="true" fitToHeight="true">
                     <GridPane fx:id="mlGrid" hgap="3" vgap="3"/>
                 </ScrollPane>
 
