@@ -59,7 +59,6 @@
 
     <build>
         <plugins>
-            <!-- Компилятор -->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
@@ -69,7 +68,6 @@
                 </configuration>
             </plugin>
 
-            <!-- JAR со всеми зависимостями -->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-assembly-plugin</artifactId>
