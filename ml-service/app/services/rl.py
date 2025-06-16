@@ -10,11 +10,9 @@ from app.services.baseline import BaselinePlanner
 
 
 class RandomRLPlanner(BaselinePlanner):
-
-    EPS = 0.3  # 30 % chance to shuffle whole queue
-
+    EPS = 0.3
     def build(self) -> list[dict]:
         if random.random() < self.EPS:
             random.shuffle(self.req.ships)
-        # FIFO-greedy
         return super().build()
+
