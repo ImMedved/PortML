@@ -15,7 +15,6 @@ public class ShipDto {
     private String cargoType;
     private double estDurationHours;
     private String priority;
-    private LocalDateTime arrival;
 
     /* ---------- static factory ---------- */
     public static ShipDto fromJson(Map<String, Object> map) {
@@ -66,10 +65,10 @@ public class ShipDto {
     public String getPriority() { return priority; }
 
     public LocalDateTime getArrival() {
-        return arrival;
+        return arrivalTime;
     }
 
     public void setArrival(LocalDateTime arrival) {
-        this.arrival = arrival;
+        this.arrivalTime = arrival;
     }
 }
