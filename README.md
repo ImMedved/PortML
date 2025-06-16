@@ -1,26 +1,67 @@
-The project creates a schedule of mooring of ships in the port. Ships, terminals in the port and events that can close part or all of the terminals have many fields that affect the plan, which can be seen in the UI. The data is configured via the Edit buttons in the UI.
-Note: when generating random data, the generator does not fill in the ship's arrival date, so for a correct test, you need to enter this data manually.
+# PortML — Intelligent Port Mooring Scheduler
 
-The project may have many shortcomings, bugs and not all systems work fully. The project is in the process of being finalized.
+PortML is an interactive system for planning the mooring of ships in a port, taking into account terminal constraints, ship parameters, and real-world events such as weather and closures.
 
-To run:
-1. Go to portmanager-ui 
-2. mvn clean package
-3. cd ..
-4. docker compose up --build
-5. It 2nd cmd/terminal go to portmanager-ui and run:
+## Features
 
-java --module-path "C:\Java\javafx-sdk-21.0.7\lib" --add-modules javafx.controls,javafx.fxml -jar target/portmanager-ui-jar-with-dependencies.jar
+- Interactive JavaFX-based UI to manage terminals, ships, and events.
+- AI-generated and baseline scheduling algorithms.
+- Support for port-wide and per-terminal closures.
+- Editable scenario via GUI or randomly generated data.
+- Plan comparison and real-time Gantt chart visualization.
 
-https://gluonhq.com/products/javafx/
+## Quick Start
 
-Amazon corretto 17+ sdk is preferred. Or run without path if it works.
-https://docs.aws.amazon.com/corretto/latest/corretto-21-ug/downloads-list.html
+### Prerequisites
 
-Docker is needed. 
-Java 17+ is needed. 
+- **Java 17+** (Amazon Corretto recommended): https://docs.aws.amazon.com/corretto/latest/corretto-21-ug/downloads-list.html
+- **JavaFX SDK 21+** (for UI): https://gluonhq.com/products/javafx/
+- **Docker + Docker Compose**
 
+### 1. Build UI
 
-If error while build:
-Failed to execute goal on project portmanager-backend: Could not resolve dependencies for project com.portmanager:portmanager-backend:jar:1.0-SNAPSHOT
-delete all docker data, images, containers and db and docker compose up --build
+```bash
+cd portmanager-ui
+mvn clean package
+```
+
+### 2. Launch Backend Services
+```bash
+cd ..
+docker compose up --build
+```
+### 3. Launch UI (in separate terminal)
+```bash
+cd portmanager-ui
+java --module-path "C:\Java\javafx-sdk-21.0.7\lib" \
+     --add-modules javafx.controls,javafx.fxml \
+     -jar target/portmanager-ui-jar-with-dependencies.jar
+```
+
+## Notes
+- Random data can be generated via the **"Random Data"** button in the UI.
+- The generated scenario includes:
+    - A set of ships with randomized length, draft, priority, and cargo type;
+    - A predefined set of terminals;
+    - Weather events and terminal closures.
+
+> However, the generator data may not be realistic, and sometimes it is impossible to create a plan from it.  
+> You must check them before generation to achieve maximum efficiency via **Edit Vessels/Terminals/Events** for the scheduling algorithms to work.
+
+- Once arrival times are filled in, click **"Generate Plan"** to produce a mooring schedule.
+
+## Troubleshooting
+Error: failed to execute goal on project portmanager-backend: Could not resolve dependencies...
+
+Fix: remove all Docker containers, volumes, and images, then rebuild:
+```bash
+docker system prune -a --volumes
+docker compose up --build
+```
+
+## Structure
+
+- portmanager-ui/          ← JavaFX UI application
+- portmanager-backend/     ← Spring Boot backend
+- ml-service/              ← ML-based scheduling microservice
+- docker-compose.yml       ← Launches backend + ML + database
