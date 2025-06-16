@@ -4,6 +4,7 @@ import com.portmanager.ui.controller.ScheduleController;
 import com.portmanager.ui.controller.SettingsResult;
 import com.portmanager.ui.model.*;
 import com.portmanager.ui.service.BackendClient;
+import javafx.application.Platform;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
@@ -15,12 +16,12 @@ import javafx.stage.Stage;
 
 import java.io.IOException;
 import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
+import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
 import java.time.temporal.ChronoUnit;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 
 public class AppController {
 
@@ -54,6 +55,7 @@ public class AppController {
 
     private final BackendClient backendClient = BackendClient.get();
     private static final int SLOT_WIDTH = 60;
+    private static final double MIN_SLOT = 24;  // not less than 24 px, otherwise the blocks disappear
 
     private List<ShipDto> manualShips = new ArrayList<>();
     private List<TerminalDto> manualTerminals = new ArrayList<>();
@@ -72,8 +74,12 @@ public class AppController {
         draftColumn.setCellValueFactory(d -> new SimpleStringProperty(d.getValue().getDraft()));
         durationColumn.setCellValueFactory(d -> new SimpleStringProperty(d.getValue().getDuration()));
 
-        manualScroll.viewportBoundsProperty().addListener((obs, oldVal, newVal) -> {
-            if (lastPlan != null) drawPlanTimeline(lastPlan);
+        manualScroll.viewportBoundsProperty().addListener((o,ov,nv) -> {
+            if (lastPlan != null && nv.getWidth()>0) Platform.runLater(() -> drawPlanTimeline(lastPlan));
+        });
+
+        mlScroll.viewportBoundsProperty().addListener((o,ov,nv) -> {
+            if (lastPlan != null && nv.getWidth()>0) Platform.runLater(() -> drawPlanTimeline(lastPlan));
         });
 
         shipTable.setOnMouseClicked(e -> Optional.ofNullable(shipTable.getSelectionModel().getSelectedItem())
@@ -98,7 +104,7 @@ public class AppController {
         ConditionsDto dto = new ConditionsDto(manualTerminals, manualShips, manualEvents);
         backendClient.generatePlan(dto).ifPresentOrElse(plan -> {
             scheduleController.renderPlan(plan);
-            autoSizeScheduleTable();
+            scheduleController.fitHeightToRows();
             drawPlanTimeline(plan);
             planInfoLabel.setText("ID: " + plan.getScenarioId() + " · " + plan.getAlgorithmUsed());
             lastPlan = plan;
@@ -174,137 +180,128 @@ public class AppController {
         alert.setTitle(title);
         alert.showAndWait();
     }
+
     private void drawPlanTimeline(PlanResponseDto plan) {
-        /* same borders by ships + events */
-        LocalDateTime min = null, max = null;
 
-        for (ScheduleItemDto it : plan.getSchedule()) {
-            LocalDateTime s = parseDateTime(it.getStartTime());
-            LocalDateTime e = parseDateTime(it.getEndTime());
-            if (s != null && (min == null || s.isBefore(min))) min = s;
-            if (e != null && (max == null || e.isAfter(max)))  max = e;
+        /* 1. Collect terminals and timestamps */
+        LinkedHashSet<String> termSet = new LinkedHashSet<>();
+
+        for (TerminalDto t : manualTerminals) {           // consider all known terminals
+            termSet.add(String.valueOf(t.getId()));
+        }
+
+        TreeSet<OffsetDateTime> timeSet = new TreeSet<>();
+
+        for (ScheduleItemDto s : plan.getSchedule()) {
+            termSet.add(s.getTerminalId());
+            timeSet.add(parseOffset(s.getStartTime()));
+            timeSet.add(parseOffset(s.getEndTime()));
         }
         for (EventDto ev : manualEvents) {
-            if (ev.getStart() != null && (min == null || ev.getStart().isBefore(min))) min = ev.getStart();
-            if (ev.getEnd()   != null && (max == null || ev.getEnd().isAfter(max)))     max = ev.getEnd();
+            if (ev.getTerminalId() != null && !ev.getTerminalId().isBlank())
+                termSet.add(ev.getTerminalId());
+            if (ev.getStart() != null) timeSet.add(ev.getStart().atOffset(ZoneOffset.UTC));
+            if (ev.getEnd()   != null) timeSet.add(ev.getEnd().atOffset(ZoneOffset.UTC));
         }
-        if (min == null || max == null) return;        // empty set
+        if (timeSet.size() < 2 || termSet.isEmpty()) return;
 
-        long hoursTotal = ChronoUnit.HOURS.between(min, max) + 1;
+        List<String> terms = new ArrayList<>(termSet);
+        List<OffsetDateTime> times = new ArrayList<>(timeSet);
 
-        /* width of 1 slot so that the whole scale fits */
-        double available = manualScroll.getWidth() > 0
-                ? manualScroll.getWidth() - 80          // 80 px - 1st column (terminal names)
-                : 800;                                  // fallback to first layout
-        slotWidth = Math.max(20, available / hoursTotal);   // ≥20 px so that the blocks do not disappear
+        /* 2. We adjust the slot and line sizes to the available window */
+        double freeW = manualScroll.getViewportBounds().getWidth()  - 80;   // 80px – left column
+        if (freeW > 0) slotWidth = Math.max(MIN_SLOT, freeW / times.size());
 
-        /* grid */
-        prepareGrid(manualGrid, hoursTotal);
-        prepareGrid(mlGrid,     hoursTotal);
+        double freeH = manualScroll.getViewportBounds().getHeight() - 30;   // 30px – row of dates
+        double rowH  = Math.max(24, freeH / terms.size());                  // every line ≥24px
 
-        /* vessels — only on mlGrid */
-        for (ScheduleItemDto it : plan.getSchedule()) {
-            int row  = findTerminalRow(it.getTerminalId());
-            int c0   = col(parseDateTime(it.getStartTime()), min);
-            int span = (int) ChronoUnit.HOURS.between(
-                    parseDateTime(it.getStartTime()),
-                    parseDateTime(it.getEndTime())) + 1;
+        /* 3. Gird builder */
+        prepareGridWithHeadings(manualGrid, terms, times, rowH);
+        prepareGridWithHeadings(mlGrid,     terms, times, rowH);
+
+        /* 4. Vessels (only in mlGrid) */
+        for (ScheduleItemDto s : plan.getSchedule()) {
+            int row = 1 + terms.indexOf(s.getTerminalId());
+            int c0  = 1 + times.indexOf(parseOffset(s.getStartTime()));
+            int cE  = 1 + times.indexOf(parseOffset(s.getEndTime()));
+            int span= Math.max(1, cE - c0);
+
             addBlock(mlGrid, row, c0, span,
-                    "-fx-background-color:#8BC34A;-fx-text-fill:white;",
-                    it.getVesselId());
+                    "-fx-background-color:#8BC34A;-fx-border-color:black;",
+                    s.getVesselId(), rowH);
         }
 
-        /* events — on bought grids */
+        /* 5. 2 girds events */
         for (EventDto ev : manualEvents) {
-            int c0   = col(ev.getStart(), min);
-            int span = (int) ChronoUnit.HOURS.between(ev.getStart(), ev.getEnd()) + 1;
-            boolean closure = ev.getTerminalId() != null && !ev.getTerminalId().isBlank();
+            int c0  = 1 + times.indexOf(ev.getStart().atOffset(ZoneOffset.UTC));
+            int cE  = 1 + times.indexOf(ev.getEnd().atOffset(ZoneOffset.UTC));
+            int spn = Math.max(1, cE - c0);
 
-            if (closure) {
-                int r = findTerminalRow(ev.getTerminalId());
-                addBlock(manualGrid, r, c0, span, "-fx-background-color: rgba(255,0,0,0.4);", "");
-                addBlock(mlGrid,     r, c0, span, "-fx-background-color: rgba(255,0,0,0.4);", "");
-            } else {               // WEATHER → all rows
-                for (int r = 0; r < manualTerminals.size(); r++) {
-                    addBlock(manualGrid, r, c0, span, "-fx-background-color: rgba(30,144,255,0.3);", "");
-                    addBlock(mlGrid,     r, c0, span, "-fx-background-color: rgba(30,144,255,0.3);", "");
+            if (ev.getTerminalId() != null && !ev.getTerminalId().isBlank()) {
+                int row = 1 + terms.indexOf(ev.getTerminalId());
+                addBlock(manualGrid,row,c0,spn,"-fx-background-color:rgba(255,0,0,0.35);","",rowH);
+                addBlock(mlGrid,    row,c0,spn,"-fx-background-color:rgba(255,0,0,0.35);","",rowH);
+            } else {   // weather → каждый ряд
+                for (int r = 1; r <= terms.size(); r++) {
+                    addBlock(manualGrid,r,c0,spn,"-fx-background-color:rgba(30,144,255,0.25);","",rowH);
+                    addBlock(mlGrid,    r,c0,spn,"-fx-background-color:rgba(30,144,255,0.25);","",rowH);
                 }
             }
         }
+
+        lastPlan = plan;   // resize cache
     }
 
-    private void prepareGrid(GridPane grid, long hoursTotal) {
-        grid.getChildren().clear();
-        grid.getColumnConstraints().clear();
+    private OffsetDateTime parseOffset(String iso) {
+        return OffsetDateTime.parse(iso, DateTimeFormatter.ISO_OFFSET_DATE_TIME);
+    }
 
-        /* 0th column for terminal name */
-        grid.getColumnConstraints().add(new ColumnConstraints(80));
-        for (int c = 0; c < hoursTotal; c++)
-            grid.getColumnConstraints().add(new ColumnConstraints(slotWidth));
+    private void prepareGridWithHeadings(GridPane g,
+                                         List<String> terms,
+                                         List<OffsetDateTime> times,
+                                         double rowH) {
 
-        grid.getRowConstraints().clear();
-        for (int r = 0; r < manualTerminals.size(); r++) {
-            grid.getRowConstraints().add(new RowConstraints(30));
-            // id
-            String caption = Optional.ofNullable(manualTerminals.get(r).getName())
-                    .filter(n -> !n.isBlank())
-                    .orElse(String.valueOf(manualTerminals.get(r).getId()));
-            Label l = new Label(caption);
-            l.setStyle("-fx-font-size:10px;-fx-text-fill:gray;");
-            GridPane.setRowIndex(l, r);
+        g.getChildren().clear();
+        g.getColumnConstraints().clear();
+        g.getRowConstraints().clear();
+
+        /* columns: 0 – terminal signatures; then – temporary */
+        g.getColumnConstraints().add(new ColumnConstraints(80));
+        for (int i = 0; i < times.size(); i++)
+            g.getColumnConstraints().add(new ColumnConstraints(slotWidth));
+
+        /* row 0 – time signatures */
+        for (int c = 0; c < times.size(); c++) {
+            String tLabel = times.get(c).format(DateTimeFormatter.ofPattern("MM-dd HH:mm"));
+            Label l = new Label(tLabel);
+            l.setStyle("-fx-font-size:9px;");
+            GridPane.setRowIndex(l, 0);
+            GridPane.setColumnIndex(l, c + 1);
+            g.getChildren().add(l);
+        }
+
+        /* terminal lines */
+        for (int r = 0; r < terms.size(); r++) {
+            g.getRowConstraints().add(new RowConstraints(rowH));
+            Label l = new Label(terms.get(r));          // signature as is
+            GridPane.setRowIndex(l, r + 1);
             GridPane.setColumnIndex(l, 0);
-            grid.getChildren().add(l);
+            g.getChildren().add(l);
         }
     }
 
-    private int findTerminalRow(String termIdStr) {
-        for (int i = 0; i < manualTerminals.size(); i++)
-            if (String.valueOf(manualTerminals.get(i).getId()).equals(termIdStr))
-                return i;
-
-        /* phantom terminal if an unknown id came */
-        TerminalDto ph = new TerminalDto();
-        ph.setId(Integer.parseInt(termIdStr));
-        ph.setName("T-" + termIdStr);
-        manualTerminals.add(ph);
-        return manualTerminals.size() - 1;
-    }
-
-    private int col(LocalDateTime t0, LocalDateTime base) {
-        return (int) ChronoUnit.HOURS.between(base, t0) + 1;   // +1 — 0th column for signatures
-    }
-
-    private void addBlock(GridPane g, int row, int c0, int span, String css, String text) {
-        Label b = new Label(text);
+    private void addBlock(GridPane g,
+                          int row, int col, int span,
+                          String css, String txt,
+                          double rowH) {
+        StackPane b = new StackPane(new Label(txt));
+        b.setPrefWidth(slotWidth * span);
+        b.setPrefHeight(rowH - 2);
         b.setStyle(css);
-        b.setMinWidth(slotWidth * span);
-        b.setMaxWidth(Region.USE_PREF_SIZE);
         GridPane.setRowIndex(b, row);
-        GridPane.setColumnIndex(b, c0);
+        GridPane.setColumnIndex(b, col);
         GridPane.setColumnSpan(b, span);
         g.getChildren().add(b);
     }
-    private LocalDateTime parseDateTime(String s) {
-        if (s == null || s.isBlank()) return null;
-        try {                          // ISO-8601 “2025-06-13T10:00”
-            return LocalDateTime.parse(s);
-        } catch (DateTimeParseException ex) {      // fallback: “yyyy-MM-dd HH:mm”
-            return LocalDateTime.parse(
-                    s.replace(' ', 'T'),
-                    DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm")
-            );
-        }
-    }
 
-    private void autoSizeScheduleTable() {
-        TableView<?> tv = scheduleController.getScheduleTable();
-        tv.setFixedCellSize(26); // row hight
-        tv.prefHeightProperty().bind(
-                tv.fixedCellSizeProperty().multiply(
-                        javafx.beans.binding.Bindings.size(tv.getItems()).add(1.01)
-                )
-        );
-        tv.minHeightProperty().bind(tv.prefHeightProperty());
-        tv.maxHeightProperty().bind(tv.prefHeightProperty());
-    }
 }
