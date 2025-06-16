@@ -34,21 +34,34 @@
             <!-- left: two plan boards -->
             <VBox spacing="6">
                 <Label text="Manual plan"/>
-                <ScrollPane fx:id="manualScroll" fitToWidth="true" fitToHeight="true">
+                <ScrollPane fx:id="manualScroll"
+                            prefHeight="240"
+                            minHeight="240"
+                            maxHeight="240"
+                            fitToWidth="true">
                     <GridPane fx:id="manualGrid" hgap="3" vgap="3"/>
                 </ScrollPane>
 
                 <Separator/>
 
                 <Label text="ML plan"/>
-                <ScrollPane fx:id="mlScroll" fitToWidth="true" fitToHeight="true">
+                <ScrollPane fx:id="mlScroll"
+                            prefHeight="240"
+                            minHeight="240"
+                            maxHeight="240"
+                            fitToWidth="true">
                     <GridPane fx:id="mlGrid" hgap="3" vgap="3"/>
                 </ScrollPane>
 
                 <Separator/>
 
                 <!-- таблица-расписание -->
-                <AnchorPane fx:id="scheduleRoot"/>
+                <!-- таблица-расписание -->
+                <AnchorPane fx:id="scheduleRoot"
+                            prefHeight="400"
+                            minHeight="400"
+                            maxHeight="400"/>
+
             </VBox>
 
             <!-- right: ships + status -->

@@ -54,18 +54,15 @@ public class ScheduleController {
 
     /** Called by AppController every time after renderPlan() */
     public void fitHeightToRows() {
-        scheduleTable.setFixedCellSize(ROW_H);
+        scheduleTable.setFixedCellSize(26);
+        scheduleTable.setPrefHeight(Region.USE_COMPUTED_SIZE);
+        scheduleTable.setMinHeight(0);
+        scheduleTable.setMaxHeight(Double.MAX_VALUE);
 
-        double h = HEADER_H + rows.size() * ROW_H;
-        scheduleTable.setPrefHeight(h);
-        scheduleTable.setMinHeight(h);
-        scheduleTable.setMaxHeight(h);
-
-        /* AnchorPane (parent) must also grow, otherwise VBox will consider the table “0 px” and still enable scroll */
         if (scheduleTable.getParent() instanceof Region parent) {
-            parent.setPrefHeight(h);
-            parent.setMinHeight(h);
-            parent.setMaxHeight(h);
+            parent.setPrefHeight(Region.USE_COMPUTED_SIZE);
+            parent.setMinHeight(0);
+            parent.setMaxHeight(Double.MAX_VALUE);
         }
     }
 }
