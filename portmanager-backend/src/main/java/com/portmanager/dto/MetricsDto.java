@@ -1,5 +1,6 @@
 package com.portmanager.dto;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import lombok.*;
 import jakarta.validation.constraints.*;
 import java.util.Map;
@@ -10,6 +11,7 @@ import java.util.Map;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
+@JsonIgnoreProperties(ignoreUnknown = true)
 @Builder(toBuilder = true)
 public class MetricsDto {
 
@@ -24,7 +26,7 @@ public class MetricsDto {
 
     //Terminal ID → utilisation ratio in [0,1].
 
-    private Map<Integer, Double> utilizationByTerminal;
+    private Map<String, Double> utilizationByTerminal;
 
     @PositiveOrZero
     private int totalScheduledShips;

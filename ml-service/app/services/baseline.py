@@ -1,194 +1,141 @@
 from __future__ import annotations
 
+import datetime as dt
+import logging
 from bisect import insort
 from collections import defaultdict
-from datetime import datetime, timedelta
+from datetime import timedelta
+from typing import Dict, List, Tuple
 
-from app.models.schemas import (
-    PlanRequestModel,
-    ShipModel,
-    TerminalModel,
-)
+from app.models.schemas import PlanRequestModel, ShipModel, TerminalModel
 
-# ───────────────────────────────────────────────────────────────────
-# helpers
-# ───────────────────────────────────────────────────────────────────
-def overlap(a0: datetime, a1: datetime, b0: datetime, b1: datetime) -> bool:
-    """True when [a0,a1) ∩ [b0,b1) ≠ ∅."""
-    return max(a0, b0) < min(a1, b1)
+log = logging.getLogger(__name__)
+
+# ─────────────────────────────── helpers ────────────────────────────
+def overlap(a0: dt.datetime, a1: dt.datetime,
+            b0: dt.datetime, b1: dt.datetime) -> bool:
+    """True, если интервалы [a0,a1) и [b0,b1) пересекаются."""
+    return a0 < b1 and b0 < a1
 
 
-def merge_intervals(intervals: list[tuple[datetime, datetime]]) -> list[tuple[datetime, datetime]]:
-    """Склеиваем пересекающиеся интервалы (для чёрных отверстий)."""
+def merge(intervals: List[Tuple[dt.datetime, dt.datetime]]
+          ) -> List[Tuple[dt.datetime, dt.datetime]]:
+    """Сливаем пересекающиеся интервалы в сортированный список."""
     if not intervals:
         return []
     intervals.sort(key=lambda x: x[0])
-    merged = [intervals[0]]
+    out = [intervals[0]]
     for s, e in intervals[1:]:
-        ps, pe = merged[-1]
-        if s <= pe:          # пересекается
-            merged[-1] = (ps, max(pe, e))
+        ps, pe = out[-1]
+        if s <= pe:
+            out[-1] = (ps, max(pe, e))
         else:
-            merged.append((s, e))
-    return merged
+            out.append((s, e))
+    return out
 
 
-# ───────────────────────────────────────────────────────────────────
-# основной планировщик
-# ───────────────────────────────────────────────────────────────────
+# ─────────────────────────────── planner ────────────────────────────
 class BaselinePlanner:
     """
-    Жадное, но *корректное* расписание.
+    Жадный «первый свободный слот».
 
-    • учитывает draft/тип груза (как раньше);
-    • допускает одновременное пребывание нескольких судов,
-      пока Σ(length) ≤ maxLength;
-    • полностью исключает WeatherEvent и TerminalClosure;
-    • выдаёт самый ранний возможный слот — ждать «лишнего» не будет.
+    * учитывает ETA, длительность, погоду и закрытия терминалов;
+    * на одном терминале одновременно ≤ 1 судна;
+    * наружу отправляет **aware-datetime** (UTC) —
+      UI спокойно парсит `+00:00` / `Z`, а backend остаётся с типами `String`.
     """
 
-    # -----------------------------------------------------------------
-    # init
-    # -----------------------------------------------------------------
-    def __init__(self, request: PlanRequestModel) -> None:
-        self.req = request
+    def __init__(self, req: PlanRequestModel):
+        self.req = req
+        self.timeline: Dict[int, List[Tuple[dt.datetime, dt.datetime]]] = defaultdict(list)
 
-        # по терминалам: [(start, end, length)]
-        self.timeline: dict[int, list[tuple[datetime, datetime, float]]] = defaultdict(list)
+        # чёрные интервалы
+        self.weather = merge([(e.start, e.end) for e in req.conditions.weatherEvents])
+        self.term_down: Dict[int, List[Tuple[dt.datetime, dt.datetime]]] = defaultdict(list)
+        for ev in req.conditions.terminalClosures:
+            self.term_down[ev.terminalId].append((ev.start, ev.end))
+        self.term_down = {k: merge(v) for k, v in self.term_down.items()}
 
-        # чёрные интервалы: global + по терминалам
-        self.global_down = merge_intervals(
-            [(ev.start, ev.end) for ev in request.conditions.weatherEvents]
+        log.info(
+            "BaselinePlanner: ships=%d, terminals=%d, weather=%d, closures=%d",
+            len(req.ships), len(req.port.terminals),
+            len(self.weather), sum(len(v) for v in self.term_down.values()),
         )
 
-        self.term_down: dict[int, list[tuple[datetime, datetime]]] = defaultdict(list)
-        for cl in request.conditions.terminalClosures:
-            self.term_down[cl.terminalId].append((cl.start, cl.end))
-        for tid, arr in self.term_down.items():
-            self.term_down[tid] = merge_intervals(arr)
+    # ---------- checks ----------------------------------------------
+    @staticmethod
+    def _fits(ship: ShipModel, term: TerminalModel) -> bool:
+        return ship.cargoType in term.allowedCargoTypes
 
-        # чтобы быстро узнавать maxLength / static-check
-        self.term_map: dict[int, TerminalModel] = {t.id: t for t in request.port.terminals}
-
-    # -----------------------------------------------------------------
-    # статические ограничения
-    # -----------------------------------------------------------------
-    def _static_ok(self, ship: ShipModel, term: TerminalModel) -> bool:
-        return (
-                ship.draft <= term.maxDraft
-                and ship.cargoType in term.allowedCargoTypes
-        )
-
-    # -----------------------------------------------------------------
-    # динамика: вместимость / отключения
-    # -----------------------------------------------------------------
-    def _blocked(self, term_id: int, s: datetime, e: datetime) -> bool:
-        """попадает ли интервал под любое закрытие"""
-        for xs, xe in self.global_down:
+    def _free(self, tid: int, s: dt.datetime, e: dt.datetime) -> bool:
+        for xs, xe in self.timeline[tid]:
             if overlap(xs, xe, s, e):
-                return True
-        for xs, xe in self.term_down.get(term_id, []):
+                return False
+        for xs, xe in self.weather:
             if overlap(xs, xe, s, e):
-                return True
-        return False
+                return False
+        for xs, xe in self.term_down.get(tid, []):
+            if overlap(xs, xe, s, e):
+                return False
+        return True
 
-    def _cap_ok(self, term_id: int, s: datetime, e: datetime, add_len: float) -> bool:
-        """Σ(length) на всём отрезке не превышает limit"""
-        limit = self.term_map[term_id].maxLength
-        used = 0.0
-        for as_, ae, ln in self.timeline[term_id]:
-            if overlap(as_, ae, s, e):
-                used += ln
-                # оптимизация: early-exit
-                if used + add_len > limit:
-                    return False
-        return used + add_len <= limit
-
-    # -----------------------------------------------------------------
-    # поиск earliest-слота
-    # -----------------------------------------------------------------
-    def _earliest_slot(self, ship: ShipModel, term_id: int) -> datetime:
-        """Самый ранний момент ≥ ETA, свободный по ВСЕМ ограничениям."""
-        cursor = ship.arrivalTime
-        dur = timedelta(hours=ship.estDurationHours)
-        limit = self.term_map[term_id].maxLength
-
-        # подготовим список «точек изменения» загрузки:
-        #  – конец любого судна
-        #  – конец любого blackout-интервала
-        change_points: set[datetime] = {cursor}
-        change_points.update(e for _, e, _ in self.timeline[term_id])
-        change_points.update(e for _, e in self.term_down.get(term_id, []))
-        change_points.update(e for _, e in self.global_down)
-        # работать будем в отсортированном виде
-        change_points = sorted(change_points)
-
+    def _earliest_slot(self, ship: ShipModel, tid: int) -> dt.datetime:
+        cur = ship.arrivalTime
+        dur = timedelta(hours=max(ship.estDurationHours, 0.0001))
         while True:
-            end = cursor + dur
+            end = cur + dur
+            if self._free(tid, cur, end):
+                return cur
+            nxt: List[dt.datetime] = []
+            nxt += [xe for xs, xe in self.timeline[tid] if overlap(xs, xe, cur, end)]
+            nxt += [xe for xs, xe in self.weather       if overlap(xs, xe, cur, end)]
+            nxt += [xe for xs, xe in self.term_down.get(tid, []) if overlap(xs, xe, cur, end)]
+            cur = min(nxt) if nxt else end
 
-            # 1. blackout?
-            if self._blocked(term_id, cursor, end):
-                # прыгаем к самому ближнему концу blackout
-                jumps = [
-                    xe
-                    for xs, xe in (self.global_down + self.term_down.get(term_id, []))
-                    if overlap(xs, xe, cursor, end)
-                ]
-                cursor = max(jumps)  # обязательно >= текущего end overlap-a
-                continue
+    # ---------- main -------------------------------------------------
+    def build(self) -> List[dict]:
+        ships = sorted(self.req.ships, key=lambda s: s.arrivalTime)
+        schedule: List[dict] = []
+        assigned = skipped = 0
 
-            # 2. вместимость?
-            if self._cap_ok(term_id, cursor, end, ship.length):
-                return cursor  # нашли!
-
-            # 3. куда прыгать, если по длине не лезет?
-            #    найдём первый конфликтующий отрезок и дождёмся его конца
-            next_times = [
-                ae
-                for as_, ae, _ in self.timeline[term_id]
-                if overlap(as_, ae, cursor, end)
-            ]
-            cursor = min(next_times) if next_times else end
-
-            # safety-костыль: если «упёрлись» в последнее событие, расширяем горизонт
-            if cursor not in change_points:
-                insort(change_points, cursor)
-
-    # -----------------------------------------------------------------
-    # основной цикл
-    # -----------------------------------------------------------------
-    def build(self) -> list[dict]:
-        schedule: list[dict] = []
-
-        # порядок обхода судов может менять наследник, поэтому работаем
-        # напрямую со списком внутри req
-        ships = self.req.ships
+        log.info("=== ⚓ BaselinePlanner.build() ===")
 
         for ship in ships:
+            # ищем терминал и старт
             best_tid, best_start = None, None
-
             for term in self.req.port.terminals:
-                if not self._static_ok(ship, term):
+                if not self._fits(ship, term):
                     continue
-
-                start = self._earliest_slot(ship, term.id)
-                if best_start is None or start < best_start:
-                    best_tid, best_start = term.id, start
+                st = self._earliest_slot(ship, term.id)
+                if best_start is None or st < best_start:
+                    best_tid, best_start = term.id, st
 
             if best_tid is None:
-                # ship cannot be allocated (нет подходящих причалов)
+                skipped += 1
+                log.warning("⚠  Ship %s skipped — no suitable terminal", ship.id)
                 continue
 
             end = best_start + timedelta(hours=ship.estDurationHours)
-            insort(self.timeline[best_tid], (best_start, end, ship.length))
+            insort(self.timeline[best_tid], (best_start, end))
+            assigned += 1
+
+            # делаем aware-datetime (UTC)
+            start_dt = best_start.replace(tzinfo=dt.timezone.utc)
+            end_dt   = end.replace(tzinfo=dt.timezone.utc)
+
+            log.info("✅  %s → T%s   %s → %s",
+                     ship.id, best_tid,
+                     start_dt.isoformat(timespec='seconds').replace('+00:00', 'Z'),
+                     end_dt  .isoformat(timespec='seconds').replace('+00:00', 'Z'))
 
             schedule.append(
-                {
-                    "vesselId": ship.id,
-                    "terminalId": best_tid,
-                    "startTime": best_start,
-                    "endTime": end,
-                }
+                dict(
+                    vesselId   = ship.id,
+                    terminalId = best_tid,
+                    startTime  = start_dt,
+                    endTime    = end_dt,
+                )
             )
 
+        log.info("=== ✅ complete: assigned=%d skipped=%d ===", assigned, skipped)
         return schedule

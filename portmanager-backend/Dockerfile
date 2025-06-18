@@ -2,7 +2,7 @@ FROM maven:3.9.7-eclipse-temurin-17 AS build
 WORKDIR /build
 COPY pom.xml .
 COPY src ./src
-RUN mvn -q -DskipTests package
+RUN mvn -q package
 
 FROM openjdk:17-slim
 RUN apt-get update && apt-get install -y curl
