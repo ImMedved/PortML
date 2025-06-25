@@ -1,6 +1,5 @@
 package com.portmanager.ui.controller;
 
-import com.portmanager.ui.DateTimeStringConverter;
 import com.portmanager.ui.cells.DateTimePickerTableCell;
 import com.portmanager.ui.model.EventDto;
 import com.portmanager.ui.model.EventDto.EventType;

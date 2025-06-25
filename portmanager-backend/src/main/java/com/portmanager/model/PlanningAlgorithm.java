@@ -1,6 +1,6 @@
 /**
  * PlanningAlgorithm
- *
+ * <p>
  * Official list of scheduling algorithms that ML-service understands.
  * Serialized as plain string ("baseline", "boosting", "RL", "pairwise").
  */

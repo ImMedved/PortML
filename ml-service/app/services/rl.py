@@ -1,8 +1,8 @@
 """
-Stub-replacement for deep RL: даёт *случайно-жадный* (epsilon-greedy 0.3)
-вариант.  Это **работающий** алгоритм, который периодически
-перемешивает порядок судов – пользователь при pairwise-тесте
-будет иногда выбирать baseline / boosting, иногда RL.
+Stub-replacement for deep RL: gives a *random-greedy* (epsilon-greedy 0.3)
+variant. This is a **working** algorithm that periodically
+shuffles the order of the ships - the user in a pairwise test
+will sometimes choose baseline / boosting, sometimes RL.
 """
 import random
 from app.models.schemas import *

@@ -1,7 +1,12 @@
 package com.portmanager.ui.model;
 
+import lombok.Getter;
+import lombok.Setter;
+
 import java.util.List;
 
+@Setter
+@Getter
 public class TerminalDto {
     private int id;
     private String name;
@@ -19,18 +24,4 @@ public class TerminalDto {
         this.allowedCargoTypes = allowedCargoTypes;
     }
 
-    public int getId() { return id; }
-    public void setId(int id) { this.id = id; }
-
-    public String getName() { return name; }
-    public void setName(String name) { this.name = name; }
-
-    public double getMaxLength() { return maxLength; }
-    public void setMaxLength(double maxLength) { this.maxLength = maxLength; }
-
-    public double getMaxDraft() { return maxDraft; }
-    public void setMaxDraft(double maxDraft) { this.maxDraft = maxDraft; }
-
-    public List<String> getAllowedCargoTypes() { return allowedCargoTypes; }
-    public void setAllowedCargoTypes(List<String> allowedCargoTypes) { this.allowedCargoTypes = allowedCargoTypes; }
 }

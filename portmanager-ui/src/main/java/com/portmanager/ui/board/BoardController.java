@@ -3,7 +3,6 @@ package com.portmanager.ui.board;
 import com.portmanager.ui.model.*;
 import javafx.geometry.HPos;
 import javafx.geometry.Pos;
-import javafx.scene.Node;
 import javafx.scene.control.Label;
 import javafx.scene.layout.*;
 

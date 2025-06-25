@@ -11,25 +11,25 @@ import java.time.LocalDateTime;
 import java.time.LocalTime;
 
 /**
- * TableCell с DatePicker + Spinner(hh:mm) для редактирования LocalDateTime.
- *
- * Используется так:
+ * TableCell with DatePicker + Spinner(hh:mm) for editing LocalDateTime.
+ * <p>
+ * Used like this:
  * <pre>
- *  arrivalColumn.setCellFactory(col -> new DateTimePickerTableCell<>());
+ * arrivalColumn.setCellFactory(col -> new DateTimePickerTableCell<>());
  * </pre>
  *
- * @param <S> тип объекта-строки (ShipDto, EventDto …)
+ * @param <S> string object type (ShipDto, EventDto …)
  */
 public class DateTimePickerTableCell<S> extends TableCell<S, LocalDateTime> {
 
-    /* ── графика ──────────────────────────────────────────────── */
+    /* ── graphics */
     private final DatePicker datePicker = new DatePicker();
     private final Spinner<Integer> hour = spinner(0, 23);
     private final Spinner<Integer> min  = spinner(0, 59);
 
     private final HBox editor = new HBox(4, datePicker, hour, new Label(":"), min);
 
-    /* ── формат строки в режиме «не редактирую» ──────────────── */
+    /* ── string format in "not editing" mode */
     private static final StringConverter<LocalDateTime> TEXT_FMT =
             new StringConverter<>() {
                 @Override
@@ -43,7 +43,7 @@ public class DateTimePickerTableCell<S> extends TableCell<S, LocalDateTime> {
     public DateTimePickerTableCell() {
         setPadding(new Insets(2));
 
-        /* commit при ENTER */
+        /* commit on ENTER */
         setOnKeyReleased(e -> {
             switch (e.getCode()) {
                 case ENTER  -> commitEdit(picked());
@@ -51,14 +51,14 @@ public class DateTimePickerTableCell<S> extends TableCell<S, LocalDateTime> {
             }
         });
 
-        /* обновляем Spinner при выборе даты */
-        ChangeListener<Object> h = (obs, o, n) -> {};        // пустой – только триггер
+        /* update the Spinner when selecting a date */
+        ChangeListener<Object> h = (obs, o, n) -> {};        // empty - trigger only
         datePicker.valueProperty().addListener(h);
         hour.valueProperty().addListener(h);
         min.valueProperty().addListener(h);
     }
 
-    /* ────────────────────────────── TableCell API ─────────── */
+    /* TableCell API */
 
     @Override
     public void startEdit() {
@@ -102,7 +102,7 @@ public class DateTimePickerTableCell<S> extends TableCell<S, LocalDateTime> {
         }
     }
 
-    /* ── helpers ─────────────────────────────────────────────── */
+    /* ── helpers */
 
     private LocalDateTime picked() {
         LocalDate d = datePicker.getValue();

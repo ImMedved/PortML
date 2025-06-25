@@ -4,7 +4,6 @@ import com.portmanager.dto.*;
 import com.portmanager.service.*;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
-import com.portmanager.dto.PlanningRequestDto;
 
 @RestController
 @RequestMapping("/api")
@@ -31,7 +30,7 @@ public class PlanController {
     @PostMapping("/data/generate")
     public ConditionsDto generate(@RequestParam(defaultValue = "20") int ships) {
         generatorService.generate(ships);
-        return dataService.getCurrentConditions();   // <-- вернём готовый сценарий
+        return dataService.getCurrentConditions();   // <-- we will return the finished script
     }
 
     /* ---------- POST /plan ---------- */

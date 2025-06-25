@@ -1,71 +1,83 @@
+/*
+ * PortManager — UI
+ * Full version of AppController.java (the schedule diagram is rewritten from scratch).
+ *
+ * Main: controller class + nested static class TimelineDiagram,
+ * which draws a Gantt diagram with cutoffs by days/weeks,
+ * events and ships, supports click → ShipInfoDialog.
+ */
+
 package com.portmanager.ui;
 
+import com.portmanager.ui.board.ManualBoardController;
 import com.portmanager.ui.controller.ScheduleController;
 import com.portmanager.ui.controller.SettingsResult;
 import com.portmanager.ui.model.*;
 import com.portmanager.ui.service.BackendClient;
-import javafx.application.Platform;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
+import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.*;
+import javafx.scene.paint.Color;
+import javafx.scene.shape.Line;
+import javafx.scene.shape.Rectangle;
+import javafx.scene.text.Text;
 import javafx.stage.Stage;
 
 import java.io.IOException;
-import java.time.LocalDateTime;
-import java.time.OffsetDateTime;
-import java.time.ZoneOffset;
-import java.time.format.DateTimeFormatter;
-import java.time.format.DateTimeParseException;
-import java.time.temporal.ChronoUnit;
+import java.time.*;
 import java.util.*;
 
+/**
+ * The main controller of the application.
+ */
 public class AppController {
+
+    /* UI from FXML */
 
     @FXML private ComboBox<String> algorithmSelector;
 
+    /** GridPanes from the old implementation (no longer used, but left in order not to touch the FXML). */
     @FXML private GridPane manualGrid;
     @FXML private GridPane mlGrid;
+
+    @FXML private ScrollPane manualScroll;
+    @FXML private ScrollPane mlScroll;
+
+    @FXML private Pane manualPane;
+    @FXML private Label manualErrorLabel;
 
     @FXML private AnchorPane scheduleRoot;
     private ScheduleController scheduleController;
 
-    @FXML private Label planInfoLabel;
-    @FXML private Label statusLabel;
-    @FXML private Label terminalCount;
-    @FXML private Label vesselCount;
-    @FXML private Label eventCount;
+    @FXML private Label planInfoLabel, statusLabel;
+    @FXML private Label terminalCount, vesselCount, eventCount;
 
     @FXML private TableView<ShipRow> shipTable;
-    @FXML private TableColumn<ShipRow, String> shipColumn;
-    @FXML private TableColumn<ShipRow, String> arrivalColumn;
-    @FXML private TableColumn<ShipRow, String> cargoColumn;
-    @FXML private TableColumn<ShipRow, String> priorityColumn;
-    @FXML private TableColumn<ShipRow, String> lengthColumn;
-    @FXML private TableColumn<ShipRow, String> draftColumn;
-    @FXML private TableColumn<ShipRow, String> durationColumn;
-
-    @FXML private ScrollPane manualScroll;
-    @FXML private ScrollPane mlScroll;
-    private PlanResponseDto lastPlan;
-    private double slotWidth = 60;
+    @FXML private TableColumn<ShipRow,String> shipColumn, arrivalColumn, cargoColumn,
+            priorityColumn, lengthColumn, draftColumn, durationColumn;
+    private final ManualBoardController manualBoardController = new ManualBoardController();
 
     private final BackendClient backendClient = BackendClient.get();
-    private static final int SLOT_WIDTH = 60;
-    private static final double MIN_SLOT = 24;  // not less than 24 px, otherwise the blocks disappear
 
-    private List<ShipDto> manualShips = new ArrayList<>();
-    private List<TerminalDto> manualTerminals = new ArrayList<>();
-    private List<EventDto> manualEvents = new ArrayList<>();
+    private PlanResponseDto lastPlan;
+
+    private List<ShipDto>      manualShips  = new ArrayList<>();
+    private List<TerminalDto>  manualTerms  = new ArrayList<>();
+    private List<EventDto>     manualEvents = new ArrayList<>();
+
+    private TimelineDiagram mlDiagram;
 
     @FXML
     public void initialize() {
         algorithmSelector.getItems().addAll("baseline", "boosting", "RL");
         algorithmSelector.setValue("baseline");
 
+        /* table of vessels */
         shipColumn.setCellValueFactory(d -> new SimpleStringProperty(d.getValue().getVesselId()));
         arrivalColumn.setCellValueFactory(d -> new SimpleStringProperty(d.getValue().getArrivalTime()));
         cargoColumn.setCellValueFactory(d -> new SimpleStringProperty(d.getValue().getCargoType()));
@@ -74,21 +86,15 @@ public class AppController {
         draftColumn.setCellValueFactory(d -> new SimpleStringProperty(d.getValue().getDraft()));
         durationColumn.setCellValueFactory(d -> new SimpleStringProperty(d.getValue().getDuration()));
 
-        manualScroll.viewportBoundsProperty().addListener((o,ov,nv) -> {
-            if (lastPlan != null && nv.getWidth()>0) Platform.runLater(() -> drawPlanTimeline(lastPlan));
-        });
+        shipTable.setOnMouseClicked(e ->
+                Optional.ofNullable(shipTable.getSelectionModel().getSelectedItem())
+                        .ifPresent(s -> ShipInfoDialog.show(s.getDto())));
 
-        mlScroll.viewportBoundsProperty().addListener((o,ov,nv) -> {
-            if (lastPlan != null && nv.getWidth()>0) Platform.runLater(() -> drawPlanTimeline(lastPlan));
-        });
-
-        shipTable.setOnMouseClicked(e -> Optional.ofNullable(shipTable.getSelectionModel().getSelectedItem())
-                .ifPresent(s -> ShipInfoDialog.show(s.getDto())));
-
+        /* timetable on bottom */
         try {
-            FXMLLoader loader = new FXMLLoader(getClass().getResource("/schedule_view.fxml"));
-            AnchorPane pane = loader.load();
-            scheduleController = loader.getController();
+            FXMLLoader l = new FXMLLoader(getClass().getResource("/schedule_view.fxml"));
+            AnchorPane pane = l.load();
+            scheduleController = l.getController();
             scheduleRoot.getChildren().setAll(pane);
             AnchorPane.setTopAnchor(pane, 0.0);
             AnchorPane.setRightAnchor(pane, 0.0);
@@ -97,58 +103,104 @@ public class AppController {
         } catch (IOException ex) {
             ex.printStackTrace();
         }
+
+        /* new chart instead of mlGrid */
+        mlDiagram = new TimelineDiagram();
+        mlScroll.setFitToHeight(true);
+        mlScroll.setFitToWidth(false); // disable stretching
+        mlScroll.setHbarPolicy(ScrollPane.ScrollBarPolicy.ALWAYS); // show scroll bar
+        mlScroll.setContent(mlDiagram);
+
+        manualScroll.setFitToWidth(false);
+        manualScroll.setHbarPolicy(ScrollPane.ScrollBarPolicy.AS_NEEDED);
+
+        manualBoardController.attach(manualPane, manualErrorLabel, manualTerms, manualEvents, manualShips);
     }
 
-    @FXML private void onGeneratePlan() {
-        setStatus("Requesting plan...");
-        ConditionsDto dto = new ConditionsDto(manualTerminals, manualShips, manualEvents);
+    /* actions */
+
+    /** Generate Plan */
+    @FXML
+    private void onGeneratePlan() {
+        setStatus("Requesting plan…");
+        ConditionsDto dto = new ConditionsDto(manualTerms, manualShips, manualEvents);
+
         backendClient.generatePlan(dto).ifPresentOrElse(plan -> {
+            /* table → lower right corner */
             scheduleController.renderPlan(plan);
             scheduleController.fitHeightToRows();
-            drawPlanTimeline(plan);
-            planInfoLabel.setText("ID: " + plan.getScenarioId() + " · " + plan.getAlgorithmUsed());
+
+            /* chart */
+            mlDiagram.render(plan, manualTerms, manualEvents, manualShips);
+
+            planInfoLabel.setText("ID: " + plan.getScenarioId() +
+                    " · " + plan.getAlgorithmUsed());
             lastPlan = plan;
             setStatus("Ready");
         }, () -> {
-            setStatus("Failed to get plan");
-            showError("Error", "No plan received");
+            setStatus("Failed");
+            showErr("Plan was not received");
         });
     }
 
-    private void refreshShipTable() {
-        shipTable.getItems().setAll(
-                manualShips.stream().map(ShipRow::new).toList()
-        );
-    }
-
-    @FXML private void onRandomData() {
-        setStatus("Requesting random data...");
+    /* Random Data */
+    @FXML
+    private void onRandomData() {
+        setStatus("Requesting random data…");
         backendClient.requestRandomData(20).ifPresentOrElse(dto -> {
-            manualTerminals = dto.terminals();
-            manualShips = dto.ships();
+            manualTerms  = dto.terminals();
+            manualShips  = dto.ships();
             manualEvents = dto.events();
-            terminalCount.setText(String.valueOf(manualTerminals.size()));
+            terminalCount.setText(String.valueOf(manualTerms.size()));
             vesselCount.setText(String.valueOf(manualShips.size()));
             eventCount.setText(String.valueOf(manualEvents.size()));
             refreshShipTable();
             setStatus("Random data loaded");
         }, () -> {
             setStatus("Failed to load data");
-            showError("Error", "No data received");
+            showErr("No data received");
         });
     }
 
-    @FXML private void openTerminalSettings() {
-        manualTerminals = openSettingsDialog("/terminal_settings.fxml", manualTerminals);
-        terminalCount.setText(String.valueOf(manualTerminals.size()));
+    @FXML
+    private void onSubmitManualPlan() {
+        Alert a = new Alert(Alert.AlertType.INFORMATION,
+                "Manual plan submitted (placeholder)",
+                ButtonType.OK);
+        a.setTitle("Submit");
+        a.showAndWait();
     }
 
+    @FXML
+    private void onFixMlPlan() {
+        if (lastPlan == null) {
+            showErr("No ML plan to copy.");
+            return;
+        }
+
+        if (manualTerms.isEmpty() || manualShips.isEmpty()) {
+            showErr("Manual terminals or vessels not loaded.");
+            return;
+        }
+
+        ConditionsDto scenario = new ConditionsDto(manualTerms, manualShips, manualEvents); // ?
+        manualBoardController.updateData(manualTerms, manualEvents, manualShips);
+        manualBoardController.renderPlan(lastPlan);
+
+        setStatus("ML plan copied to manual.");
+    }
+
+    /* settings dialogs */
+
+    @FXML private void openTerminalSettings() {
+        manualTerms = openSettingsDialog("/terminal_settings.fxml", manualTerms);
+        terminalCount.setText(String.valueOf(manualTerms.size()));
+    }
     @FXML private void openVesselSettings() {
         manualShips = openSettingsDialog("/vessels_settings.fxml", manualShips);
         vesselCount.setText(String.valueOf(manualShips.size()));
         refreshShipTable();
     }
-
     @FXML private void openEventsSettings() {
         manualEvents = openSettingsDialog("/events_settings.fxml", manualEvents);
         eventCount.setText(String.valueOf(manualEvents.size()));
@@ -156,14 +208,14 @@ public class AppController {
 
     private <T> List<T> openSettingsDialog(String fxml, List<T> initial) {
         try {
-            FXMLLoader loader = new FXMLLoader(getClass().getResource(fxml));
-            Parent root = loader.load();
-            SettingsResult<T> ctrl = loader.getController();
+            FXMLLoader l = new FXMLLoader(getClass().getResource(fxml));
+            Parent root = l.load();
+            SettingsResult<T> ctrl = l.getController();
             ctrl.setData(initial);
-            Stage dialog = new Stage();
-            dialog.setTitle("Settings");
-            dialog.setScene(new Scene(root));
-            dialog.showAndWait();
+            Stage dlg = new Stage();
+            dlg.setTitle("Settings");
+            dlg.setScene(new Scene(root));
+            dlg.showAndWait();
             return ctrl.collectResult();
         } catch (IOException e) {
             e.printStackTrace();
@@ -171,137 +223,237 @@ public class AppController {
         }
     }
 
-    private void setStatus(String msg) {
-        statusLabel.setText("[Port] " + msg);
+    /* helpers */
+
+    private void refreshShipTable() {
+        shipTable.getItems().setAll(
+                manualShips.stream().map(ShipRow::new).toList()
+        );
     }
 
-    private void showError(String title, String message) {
-        Alert alert = new Alert(Alert.AlertType.ERROR, message, ButtonType.OK);
-        alert.setTitle(title);
-        alert.showAndWait();
+    private void setStatus(String msg) { statusLabel.setText("[Port] " + msg); }
+
+    private void showErr(String msg) {
+        Alert a = new Alert(Alert.AlertType.ERROR, msg, ButtonType.OK);
+        a.setTitle("Error");
+        a.showAndWait();
     }
 
-    private void drawPlanTimeline(PlanResponseDto plan) {
+    /* =====================================================================
+       TimelineDiagram - Absolutely positioned Gantt chart
+       ===================================================================== */
+    public static class TimelineDiagram extends Pane {
 
-        /* 1. Collect terminals and timestamps */
-        LinkedHashSet<String> termSet = new LinkedHashSet<>();
+        /* sizes and colors */
+        private static final double LABEL_W = 120;   // on the left are the names of the terminals
+        private static final double ROW_H   = 40;    // baseline height
+        private static final double HOUR_W  = 10;   // width of one hour
 
-        for (TerminalDto t : manualTerminals) {           // consider all known terminals
-            termSet.add(String.valueOf(t.getId()));
-        }
+        private OffsetDateTime horizonStart;
+        private OffsetDateTime horizonEnd;
 
-        TreeSet<OffsetDateTime> timeSet = new TreeSet<>();
+        /* internal record for storing vessel intervals */
+        private record Interval(OffsetDateTime s, OffsetDateTime e) {}
 
-        for (ScheduleItemDto s : plan.getSchedule()) {
-            termSet.add(s.getTerminalId());
-            timeSet.add(parseOffset(s.getStartTime()));
-            timeSet.add(parseOffset(s.getEndTime()));
-        }
-        for (EventDto ev : manualEvents) {
-            if (ev.getTerminalId() != null && !ev.getTerminalId().isBlank())
-                termSet.add(ev.getTerminalId());
-            if (ev.getStart() != null) timeSet.add(ev.getStart().atOffset(ZoneOffset.UTC));
-            if (ev.getEnd()   != null) timeSet.add(ev.getEnd().atOffset(ZoneOffset.UTC));
-        }
-        if (timeSet.size() < 2 || termSet.isEmpty()) return;
+        /** Complete redraw method */
+        public void render(PlanResponseDto plan,
+                           List<TerminalDto> terminals,
+                           List<EventDto> events,
+                           List<ShipDto> ships) {
 
-        List<String> terms = new ArrayList<>(termSet);
-        List<OffsetDateTime> times = new ArrayList<>(timeSet);
+            getChildren().clear();
+            if (plan == null) return;
 
-        /* 2. We adjust the slot and line sizes to the available window */
-        double freeW = manualScroll.getViewportBounds().getWidth()  - 80;   // 80px – left column
-        if (freeW > 0) slotWidth = Math.max(MIN_SLOT, freeW / times.size());
+            /* data preparation */
 
-        double freeH = manualScroll.getViewportBounds().getHeight() - 30;   // 30px – row of dates
-        double rowH  = Math.max(24, freeH / terms.size());                  // every line ≥24px
+            /* terminals (save the order of addition) */
+            LinkedHashSet<String> termSet = new LinkedHashSet<>();
+            terminals.forEach(t -> termSet.add(String.valueOf(t.getId())));
+            plan.getSchedule().forEach(si -> termSet.add(si.getTerminalId()));
+            List<String> termList = new ArrayList<>(termSet);
 
-        /* 3. Gird builder */
-        prepareGridWithHeadings(manualGrid, terms, times, rowH);
-        prepareGridWithHeadings(mlGrid,     terms, times, rowH);
+            /* time horizon */
+            horizonStart = OffsetDateTime.MAX;
+            horizonEnd   = OffsetDateTime.MIN;
 
-        /* 4. Vessels (only in mlGrid) */
-        for (ScheduleItemDto s : plan.getSchedule()) {
-            int row = 1 + terms.indexOf(s.getTerminalId());
-            int c0  = 1 + times.indexOf(parseOffset(s.getStartTime()));
-            int cE  = 1 + times.indexOf(parseOffset(s.getEndTime()));
-            int span= Math.max(1, cE - c0);
+            plan.getSchedule().forEach(si -> {
+                OffsetDateTime s = OffsetDateTime.parse(si.getStartTime());
+                OffsetDateTime e = OffsetDateTime.parse(si.getEndTime());
+                if (s.isBefore(horizonStart)) horizonStart = s;
+                if (e.isAfter(horizonEnd))    horizonEnd   = e;
+            });
+            events.forEach(ev -> {
+                if (ev.getStart() != null) {
+                    OffsetDateTime s = ev.getStart().atOffset(ZoneOffset.UTC);
+                    if (s.isBefore(horizonStart)) horizonStart = s;
+                }
+                if (ev.getEnd() != null) {
+                    OffsetDateTime e = ev.getEnd().atOffset(ZoneOffset.UTC);
+                    if (e.isAfter(horizonEnd)) horizonEnd = e;
+                }
+            });
 
-            addBlock(mlGrid, row, c0, span,
-                    "-fx-background-color:#8BC34A;-fx-border-color:black;",
-                    s.getVesselId(), rowH);
-        }
+            long totalHours = Math.max(1, Duration.between(horizonStart, horizonEnd).toHours());
 
-        /* 5. 2 girds events */
-        for (EventDto ev : manualEvents) {
-            int c0  = 1 + times.indexOf(ev.getStart().atOffset(ZoneOffset.UTC));
-            int cE  = 1 + times.indexOf(ev.getEnd().atOffset(ZoneOffset.UTC));
-            int spn = Math.max(1, cE - c0);
+            /* canvas size */
+            setPrefWidth(LABEL_W + totalHours * HOUR_W);
+            setPrefHeight(termList.size() * ROW_H + 30);
 
-            if (ev.getTerminalId() != null && !ev.getTerminalId().isBlank()) {
-                int row = 1 + terms.indexOf(ev.getTerminalId());
-                addBlock(manualGrid,row,c0,spn,"-fx-background-color:rgba(255,0,0,0.35);","",rowH);
-                addBlock(mlGrid,    row,c0,spn,"-fx-background-color:rgba(255,0,0,0.35);","",rowH);
-            } else {   // weather → каждый ряд
-                for (int r = 1; r <= terms.size(); r++) {
-                    addBlock(manualGrid,r,c0,spn,"-fx-background-color:rgba(30,144,255,0.25);","",rowH);
-                    addBlock(mlGrid,    r,c0,spn,"-fx-background-color:rgba(30,144,255,0.25);","",rowH);
+            /* vertical grid (days/weeks) */
+            drawTimeGrid(totalHours);
+
+            /* terminal labels + horizontal lines */
+            for (int idx = 0; idx < termList.size(); idx++) {
+                Text t = new Text(termList.get(idx));
+                t.setX(4);
+                t.setY(idx * ROW_H + ROW_H * 0.7);
+                getChildren().add(t);
+
+                /* thin line */
+                Line h = new Line(0,
+                        idx * ROW_H,
+                        LABEL_W + totalHours * HOUR_W,
+                        idx * ROW_H);
+                h.setStroke(Color.LIGHTGRAY);
+                getChildren().add(h);
+            }
+            /* lower limit */
+            Line bottom = new Line(0,
+                    termList.size() * ROW_H,
+                    LABEL_W + totalHours * HOUR_W,
+                    termList.size() * ROW_H);
+            bottom.setStroke(Color.LIGHTGRAY);
+            getChildren().add(bottom);
+
+            /* events */
+            for (EventDto ev : events) {
+                if (ev.getStart() == null || ev.getEnd() == null) continue;
+
+                OffsetDateTime s = ev.getStart().atOffset(ZoneOffset.UTC);
+                OffsetDateTime e = ev.getEnd().atOffset(ZoneOffset.UTC);
+
+                double x = LABEL_W + durHours(horizonStart, s) * HOUR_W;
+                double w = durHours(s, e) * HOUR_W;
+
+                if (ev.getTerminalId() == null || ev.getTerminalId().isBlank()) {
+                    /* weather → all vertical */
+                    Rectangle r = new Rectangle(x, 0, w, termList.size() * ROW_H);
+                    r.setFill(Color.rgb(30, 144, 255, 0.25));   // blue
+                    getChildren().add(r);
+                } else {
+                    int row = termList.indexOf(ev.getTerminalId());
+                    if (row < 0) continue;
+
+                    Rectangle r = new Rectangle(x, row * ROW_H, w, ROW_H);
+                    r.setFill(Color.rgb(255, 0, 0, 0.35));      // red
+                    getChildren().add(r);
+                }
+            }
+
+            /* calculation of "paths" for simultaneous vessels */
+            Map<String, List<List<Interval>>> lanes = new HashMap<>();
+            Map<ScheduleItemDto, Integer> whichLane = new HashMap<>();
+
+            termList.forEach(t -> lanes.put(t, new ArrayList<>()));
+
+            for (ScheduleItemDto si : plan.getSchedule()) {
+                String term = si.getTerminalId();
+                Interval cur = new Interval(
+                        OffsetDateTime.parse(si.getStartTime()),
+                        OffsetDateTime.parse(si.getEndTime())
+                );
+
+                List<List<Interval>> termLanes = lanes.get(term);
+                int idx = 0;
+                for (; idx < termLanes.size(); idx++)
+                    if (!overlaps(cur, termLanes.get(idx))) break;
+
+                if (idx == termLanes.size()) termLanes.add(new ArrayList<>());
+                termLanes.get(idx).add(cur);
+                whichLane.put(si, idx);
+            }
+
+            /* terminal line division degree */
+            Map<String, Integer> laneCount = new HashMap<>();
+            lanes.forEach((k, v) -> laneCount.put(k, Math.max(1, v.size())));
+
+            /* quick access to ShipDto for a click */
+            Map<String, ShipDto> shipById = new HashMap<>();
+            ships.forEach(s -> shipById.put(s.getId(), s));
+
+            /* vessels */
+            for (ScheduleItemDto si : plan.getSchedule()) {
+                String term = si.getTerminalId();
+                int row = termList.indexOf(term);
+                if (row < 0) continue;
+
+                int lanesN = laneCount.get(term);
+                double laneH = ROW_H / lanesN;
+                int laneIdx = whichLane.get(si);
+
+                OffsetDateTime s = OffsetDateTime.parse(si.getStartTime());
+                OffsetDateTime e = OffsetDateTime.parse(si.getEndTime());
+
+                double x = LABEL_W + durHours(horizonStart, s) * HOUR_W;
+                double w = durHours(s, e) * HOUR_W;
+                double y = row * ROW_H + laneIdx * laneH;
+
+                Rectangle rect = new Rectangle(x, y, w, laneH - 2);
+                rect.setFill(Color.web("#8BC34A"));    // light-green
+                rect.setStroke(Color.BLACK);
+                getChildren().add(rect);
+
+                Text label = new Text(si.getVesselId());
+                label.setX(x + 4);
+                label.setY(y + laneH * 0.7);
+                getChildren().add(label);
+
+                /* click → info about the vessel */
+                ShipDto dto = shipById.get(si.getVesselId());
+                if (dto != null) {
+                    rect.addEventHandler(MouseEvent.MOUSE_CLICKED, e2 -> ShipInfoDialog.show(dto));
+                    label.addEventHandler(MouseEvent.MOUSE_CLICKED, e2 -> ShipInfoDialog.show(dto));
                 }
             }
         }
 
-        lastPlan = plan;   // resize cache
-    }
+        /* private helpers */
 
-    private OffsetDateTime parseOffset(String iso) {
-        return OffsetDateTime.parse(iso, DateTimeFormatter.ISO_OFFSET_DATE_TIME);
-    }
+        /** Vertical lines by day, thickened - by Mondays ☕ */
+        private void drawTimeGrid(long totalHours) {
+            OffsetDateTime cursor = horizonStart;
 
-    private void prepareGridWithHeadings(GridPane g,
-                                         List<String> terms,
-                                         List<OffsetDateTime> times,
-                                         double rowH) {
+            for (long h = 0; h <= totalHours; h++) {
+                if (cursor.getHour() == 0) {
+                    double x = LABEL_W + h * HOUR_W;
 
-        g.getChildren().clear();
-        g.getColumnConstraints().clear();
-        g.getRowConstraints().clear();
+                    Line l = new Line(x, 0, x, getPrefHeight());
+                    if (cursor.getDayOfWeek() == DayOfWeek.MONDAY) {
+                        l.setStrokeWidth(2);
+                        l.setStroke(Color.DARKGRAY);
+                    } else {
+                        l.setStrokeWidth(1);
+                        l.setStroke(Color.GRAY);
+                    }
+                    getChildren().add(l);
 
-        /* columns: 0 – terminal signatures; then – temporary */
-        g.getColumnConstraints().add(new ColumnConstraints(80));
-        for (int i = 0; i < times.size(); i++)
-            g.getColumnConstraints().add(new ColumnConstraints(slotWidth));
-
-        /* row 0 – time signatures */
-        for (int c = 0; c < times.size(); c++) {
-            String tLabel = times.get(c).format(DateTimeFormatter.ofPattern("MM-dd HH:mm"));
-            Label l = new Label(tLabel);
-            l.setStyle("-fx-font-size:9px;");
-            GridPane.setRowIndex(l, 0);
-            GridPane.setColumnIndex(l, c + 1);
-            g.getChildren().add(l);
+                    /* date */
+                    Text d = new Text(cursor.toLocalDate().toString());
+                    d.setX(x + 2); d.setY(ROW_H * 0.35);
+                    getChildren().add(d);
+                }
+                cursor = cursor.plusHours(1);
+            }
         }
 
-        /* terminal lines */
-        for (int r = 0; r < terms.size(); r++) {
-            g.getRowConstraints().add(new RowConstraints(rowH));
-            Label l = new Label(terms.get(r));          // signature as is
-            GridPane.setRowIndex(l, r + 1);
-            GridPane.setColumnIndex(l, 0);
-            g.getChildren().add(l);
+        private static long durHours(OffsetDateTime a, OffsetDateTime b) {
+            return Duration.between(a, b).toHours();
+        }
+
+        private static boolean overlaps(Interval cur, List<Interval> lane) {
+            for (Interval p : lane)
+                if (cur.s.isBefore(p.e) && p.s.isBefore(cur.e)) return true;
+            return false;
         }
     }
-
-    private void addBlock(GridPane g,
-                          int row, int col, int span,
-                          String css, String txt,
-                          double rowH) {
-        StackPane b = new StackPane(new Label(txt));
-        b.setPrefWidth(slotWidth * span);
-        b.setPrefHeight(rowH - 2);
-        b.setStyle(css);
-        GridPane.setRowIndex(b, row);
-        GridPane.setColumnIndex(b, col);
-        GridPane.setColumnSpan(b, span);
-        g.getChildren().add(b);
-    }
-
 }
