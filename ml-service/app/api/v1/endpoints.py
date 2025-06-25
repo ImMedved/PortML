@@ -49,7 +49,7 @@ def pairwise_plans(
     but for the demo we leave the endpoint short.
     """
     if dummy:
-        # генерация «пустой» пары для unit-тестов
+        # generating an "empty" pair for unit tests
         return PairwiseRequestModel(
             comparisonId="cmp-0",
             planA=planner.dummy_plan(algoA),

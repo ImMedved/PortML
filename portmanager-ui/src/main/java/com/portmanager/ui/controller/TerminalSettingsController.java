@@ -26,7 +26,7 @@ public class TerminalSettingsController implements SettingsResult<TerminalDto> {
 
     private final ObservableList<TerminalDto> terminals = FXCollections.observableArrayList();
 
-    private static final List<String> ALL_CARGO_TYPES = Arrays.asList("containers", "vehicles", "gas", "liquid", "bulk");
+    private static final List<String> ALL_CARGO_TYPES = Arrays.asList("container", "vehicles", "gas", "liquid", "bulk");
 
     @FXML
     public void initialize() {
@@ -65,7 +65,7 @@ public class TerminalSettingsController implements SettingsResult<TerminalDto> {
     @FXML
     private void onAddTerminal() {
         TerminalDto newTerminal = new TerminalDto(
-                generateRandomId(), "New Terminal", 200.0, 10.0, List.of("containers")
+                generateRandomId(), "New Terminal", 200.0, 10.0, List.of("container")
         );
         terminals.add(newTerminal);
     }

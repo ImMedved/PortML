@@ -15,7 +15,7 @@ import java.util.Optional;
  */
 public final class BackendClient {
 
-    /* ---------- Singleton ---------- */
+    /* Singleton */
 
     private static volatile BackendClient INSTANCE;
 
@@ -28,13 +28,11 @@ public final class BackendClient {
         return INSTANCE;
     }
 
-    /* ---------- fields ---------- */
-
     private final String baseUrl;                 // http://host:8080/api
     private final HttpClient http;
     private static final ObjectMapper JSON = new ObjectMapper()
             .findAndRegisterModules()
-            .disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);;
+            .disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
 
     private BackendClient() {
         this.baseUrl = resolveBaseUrl();
@@ -44,11 +42,8 @@ public final class BackendClient {
         System.out.println("[BackendClient] baseUrl = " + baseUrl);
     }
 
-    /* ==============================================================
-       Public method to call AppController
-       ============================================================== */
-
-    /** POST /plan — return Optional with plan */
+    //Public method to call AppController
+    // POST /plan — return Optional with plan
     public Optional<PlanResponseDto> generatePlan(ConditionsDto scenario) {
 
         PlanningRequestDto req = new PlanningRequestDto(scenario, "baseline");
@@ -77,7 +72,7 @@ public final class BackendClient {
         return Optional.empty();
     }
 
-    /* ---------- POST /data/generate ---------- */
+    /* POST /data/generate */
     public Optional<ConditionsDto> requestRandomData(int ships) {
         HttpRequest req = HttpRequest.newBuilder()
                 .uri(URI.create(baseUrl + "/data/generate?ships=" + ships))
@@ -115,7 +110,7 @@ public final class BackendClient {
         return Optional.empty();
     }
 
-    /* ================= helpers ================= */
+    /* helpers */
 
     private static String resolveBaseUrl() {
         String url = System.getProperty("backendUrl");

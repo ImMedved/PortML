@@ -29,7 +29,7 @@ public class MlServiceClient {
 
     public PlanResponseDto requestPlan(ConditionsDto scenario, String algorithm) {
 
-        /* ---------- events → ML-формат -------------------------------- */
+        /* ---------- events → ML-format -------------------------------- */
         List<Map<String, Object>> termClosures = scenario.events().stream()
                 .filter(e -> e.getEventType() == EventType.TERMINAL_CLOSURE)
                 .map(e -> {
@@ -38,7 +38,7 @@ public class MlServiceClient {
                     m.put("terminalId", t.terminalId());
                     m.put("start",      t.start());
                     m.put("end",        t.end());
-                    m.put("reason",     t.description());   // <-- обязательно, даже если null
+                    m.put("reason",     t.description());   // <-- required even if null
                     return m;
                 })
                 .toList();
@@ -55,7 +55,7 @@ public class MlServiceClient {
                 })
                 .toList();
 
-        /* ---------- основное тело запроса ----------------------------- */
+        /* ---------- main body of the request ----------------------------- */
         Map<String, Object> body = new HashMap<>();
         body.put("algorithm",
                 (algorithm == null || algorithm.isBlank()) ? "baseline" : algorithm);

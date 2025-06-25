@@ -1,6 +1,5 @@
 package com.portmanager.ui.controller;
 
-import com.portmanager.ui.DateTimeStringConverter;
 import com.portmanager.ui.cells.DateTimePickerTableCell;
 import com.portmanager.ui.model.ShipDto;
 import javafx.beans.property.ReadOnlyObjectWrapper;
@@ -28,7 +27,7 @@ public class VesselSettingsController implements SettingsResult<ShipDto> {
 
     private final ObservableList<ShipDto> shipList = FXCollections.observableArrayList();
 
-    private static final List<String> CARGO_TYPES = List.of("containers", "vehicles", "gas", "liquid", "bulk");
+    private static final List<String> CARGO_TYPES = List.of("container", "vehicles", "gas", "liquid", "bulk");
 
     @FXML
     public void initialize() {

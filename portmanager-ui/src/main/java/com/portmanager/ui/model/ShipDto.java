@@ -1,22 +1,31 @@
 package com.portmanager.ui.model;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import lombok.Getter;
+import lombok.Setter;
 
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.Map;
 
+@Getter
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class ShipDto {
+    @Setter
     private String id;
+    @Setter
     private LocalDateTime arrivalTime;
+    @Setter
     private double length;
+    @Setter
     private double draft;
+    @Setter
     private String cargoType;
+    @Setter
     private double estDurationHours;
     private String priority;
 
-    /* ---------- static factory ---------- */
+    /* static factory */
     public static ShipDto fromJson(Map<String, Object> map) {
         return new ShipDto(
                 (String)  map.get("id"),
@@ -29,7 +38,7 @@ public class ShipDto {
         );
     }
 
-    /* ---------- ctors / getters / setters ---------- */
+    /* ctors / getters / setters */
     public ShipDto() {}
 
     public ShipDto(String id, LocalDateTime arrivalTime,
@@ -43,26 +52,6 @@ public class ShipDto {
         this.estDurationHours = estDurationHours;
         this.priority = priority;
     }
-
-    public String getId() { return id; }
-    public void setId(String id) { this.id = id; }
-
-    public LocalDateTime getArrivalTime() { return arrivalTime; }
-    public void setArrivalTime(LocalDateTime arrivalTime) { this.arrivalTime = arrivalTime; }
-
-    public double getLength() { return length; }
-    public void setLength(double length) { this.length = length; }
-
-    public double getDraft() { return draft; }
-    public void setDraft(double draft) { this.draft = draft; }
-
-    public String getCargoType() { return cargoType; }
-    public void setCargoType(String cargoType) { this.cargoType = cargoType; }
-
-    public double getEstDurationHours() { return estDurationHours; }
-    public void setEstDurationHours(double estDurationHours) { this.estDurationHours = estDurationHours; }
-
-    public String getPriority() { return priority; }
 
     public LocalDateTime getArrival() {
         return arrivalTime;

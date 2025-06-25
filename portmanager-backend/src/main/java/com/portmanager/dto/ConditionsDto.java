@@ -4,7 +4,7 @@ import java.util.List;
 
 /**
  * Complete scenario for scheduling: terminals, ships, events.
- *
+ * <p>
  * Matches fields with record used in JavaFX-UI.
  *
  * @param terminals list of terminals

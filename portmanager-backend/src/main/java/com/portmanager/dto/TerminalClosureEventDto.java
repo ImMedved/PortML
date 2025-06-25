@@ -3,7 +3,6 @@ package com.portmanager.dto;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
 import java.time.LocalDateTime;
-import java.time.OffsetDateTime;
 
 /**
  * Event: repair/closing of a specific terminal.

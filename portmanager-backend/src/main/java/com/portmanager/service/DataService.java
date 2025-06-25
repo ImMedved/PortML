@@ -54,7 +54,7 @@ public class DataService {
                     ent.setTerminalId(src.terminalId());
                     ent.setStartTime(src.start().atOffset(ZoneOffset.UTC));
                     ent.setEndTime  (src.end().atOffset(ZoneOffset.UTC));
-                    ent.setReason   (src.description());          // ← добавили
+                    ent.setReason   (src.description());          // ←
                     closureRepo.save(ent);
                 }
 

@@ -6,7 +6,6 @@ import javafx.scene.input.*;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.Pane;
 
-import java.time.Duration;
 import java.util.Map;
 
 /**
@@ -86,10 +85,9 @@ public class ManualBoardController extends BoardController {
             int evStart = columnFor(ev.getStart());
             int evEnd   = columnFor(ev.getEnd());
 
-            int shipStart = colStart;
-            int shipEnd   = shipStart + (int) ship.getEstDurationHours();
+            int shipEnd   = colStart + (int) ship.getEstDurationHours();
 
-            boolean overlap = shipStart < evEnd && evStart < shipEnd;
+            boolean overlap = colStart < evEnd && evStart < shipEnd;
             if (overlap) return true;
         }
         return false;

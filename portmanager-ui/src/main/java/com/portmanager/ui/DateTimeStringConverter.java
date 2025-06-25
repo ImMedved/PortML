@@ -9,7 +9,7 @@ import java.time.format.DateTimeParseException;
 /**
  * Converter for editable cells of TableView – translate
  * {@link LocalDateTime} ⇄ into string format  {@code yyyy-MM-dd HH:mm}.
- *
+ * <p>
  * Text example for converter:  {@code 2025-06-14 08:30}
  */
 public class DateTimeStringConverter extends StringConverter<LocalDateTime> {

@@ -9,12 +9,14 @@ import javafx.fxml.FXML;
 import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
 import javafx.scene.layout.Region;
+import lombok.Getter;
 
 /**
  * Controls the plan table (terminal | interval).
  */
 public class ScheduleController {
 
+    @Getter
     @FXML private TableView<ScheduleRow> scheduleTable;
     @FXML private TableColumn<ScheduleRow, String> terminalColumn;
     @FXML private TableColumn<ScheduleRow, String> intervalColumn;
@@ -32,10 +34,6 @@ public class ScheduleController {
         terminalColumn.setCellValueFactory(d -> new ReadOnlyStringWrapper(d.getValue().terminal()));
         intervalColumn.setCellValueFactory(d -> new ReadOnlyStringWrapper(d.getValue().interval()));
         scheduleTable.setItems(rows);
-    }
-
-    public TableView<ScheduleRow> getScheduleTable() {
-        return scheduleTable;
     }
 
     /** Called from AppController after plan is received. */

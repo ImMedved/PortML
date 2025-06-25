@@ -1,7 +1,11 @@
 package com.portmanager.ui.model;
 
+import lombok.Getter;
+
+@Getter
 public class ShipRow {
 
+    /* ------------- вспомогательный доступ к исходному dto ---------- */
     private final ShipDto dto;
 
     /* Новый удобный конструктор  */
@@ -18,6 +22,4 @@ public class ShipRow {
     public String getDraft()      { return s(dto.getDraft()); }
     public String getDuration()   { return s(dto.getEstDurationHours()); }
 
-    /* ------------- вспомогательный доступ к исходному dto ---------- */
-    public ShipDto getDto() { return dto; }
 }

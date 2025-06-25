@@ -5,14 +5,14 @@ from typing import Dict, List, Literal, Optional
 
 from pydantic import BaseModel, Field
 
-# ── enums ──────────────────────────────────────────────────────────
+# enums
 class PlanningAlgorithm(str, Enum):
     baseline = "baseline"
     boosting = "boosting"
     RL       = "RL"
     pairwise = "pairwise"
 
-# ── port description ───────────────────────────────────────────────
+# port description
 class TerminalModel(BaseModel):
     id: int
     name: Optional[str]
@@ -25,7 +25,7 @@ class PortModel(BaseModel):
     startTime: datetime
     endTime: datetime
 
-# ── scenario ───────────────────────────────────────────────────────
+# scenario
 class ShipModel(BaseModel):
     id: str
     arrivalTime: datetime
@@ -49,7 +49,7 @@ class ConditionsModel(BaseModel):
     terminalClosures: List[TerminalClosureModel] = Field(default_factory=list)
     weatherEvents: List[WeatherEventModel]       = Field(default_factory=list)
 
-# ── request / response ─────────────────────────────────────────────
+# request / response
 class PlanRequestModel(BaseModel):
     port: PortModel
     ships: List[ShipModel]
@@ -75,7 +75,7 @@ class PlanResponseModel(BaseModel):
     algorithmUsed: PlanningAlgorithm
     scenarioId: Optional[int] = None
 
-# ── pairwise ───────────────────────────────────────────────────────
+# pairwise
 class PairwiseRequestModel(BaseModel):
     comparisonId: str
     planA: PlanResponseModel

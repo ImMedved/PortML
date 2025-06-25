@@ -13,7 +13,7 @@ public class JacksonConfig {
     @Bean
     public ObjectMapper objectMapper() {
         return new ObjectMapper()
-                .registerModule(new ParameterNamesModule()) // <-- ключ!
+                .registerModule(new ParameterNamesModule()) // <-- key!
                 .registerModule(new JavaTimeModule())
                 .findAndRegisterModules()
                 .disable(com.fasterxml.jackson.databind.SerializationFeature.
