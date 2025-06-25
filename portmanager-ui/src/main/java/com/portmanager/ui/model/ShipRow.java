@@ -5,13 +5,13 @@ import lombok.Getter;
 @Getter
 public class ShipRow {
 
-    /* ------------- вспомогательный доступ к исходному dto ---------- */
+    /* auxiliary access to the original dto */
     private final ShipDto dto;
 
-    /* Новый удобный конструктор  */
+    /* New convenient constructor  */
     public ShipRow(ShipDto dto) { this.dto = dto; }
 
-    /* ------------- getters, гарантированно null-safe ------------- */
+    /* getters, guaranteed null-safe */
     private static String s(Object o) { return o == null ? "" : o.toString(); }
 
     public String getVesselId()   { return s(dto.getId()); }

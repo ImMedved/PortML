@@ -9,6 +9,7 @@
 
 package com.portmanager.ui;
 
+import com.portmanager.ui.board.ManualBoardController;
 import com.portmanager.ui.controller.ScheduleController;
 import com.portmanager.ui.controller.SettingsResult;
 import com.portmanager.ui.model.*;
@@ -47,6 +48,9 @@ public class AppController {
     @FXML private ScrollPane manualScroll;
     @FXML private ScrollPane mlScroll;
 
+    @FXML private Pane manualPane;
+    @FXML private Label manualErrorLabel;
+
     @FXML private AnchorPane scheduleRoot;
     private ScheduleController scheduleController;
 
@@ -56,6 +60,7 @@ public class AppController {
     @FXML private TableView<ShipRow> shipTable;
     @FXML private TableColumn<ShipRow,String> shipColumn, arrivalColumn, cargoColumn,
             priorityColumn, lengthColumn, draftColumn, durationColumn;
+    private final ManualBoardController manualBoardController = new ManualBoardController();
 
     private final BackendClient backendClient = BackendClient.get();
 
@@ -105,6 +110,11 @@ public class AppController {
         mlScroll.setFitToWidth(false); // disable stretching
         mlScroll.setHbarPolicy(ScrollPane.ScrollBarPolicy.ALWAYS); // show scroll bar
         mlScroll.setContent(mlDiagram);
+
+        manualScroll.setFitToWidth(false);
+        manualScroll.setHbarPolicy(ScrollPane.ScrollBarPolicy.AS_NEEDED);
+
+        manualBoardController.attach(manualPane, manualErrorLabel, manualTerms, manualEvents, manualShips);
     }
 
     /* actions */
@@ -150,6 +160,34 @@ public class AppController {
             setStatus("Failed to load data");
             showErr("No data received");
         });
+    }
+
+    @FXML
+    private void onSubmitManualPlan() {
+        Alert a = new Alert(Alert.AlertType.INFORMATION,
+                "Manual plan submitted (placeholder)",
+                ButtonType.OK);
+        a.setTitle("Submit");
+        a.showAndWait();
+    }
+
+    @FXML
+    private void onFixMlPlan() {
+        if (lastPlan == null) {
+            showErr("No ML plan to copy.");
+            return;
+        }
+
+        if (manualTerms.isEmpty() || manualShips.isEmpty()) {
+            showErr("Manual terminals or vessels not loaded.");
+            return;
+        }
+
+        ConditionsDto scenario = new ConditionsDto(manualTerms, manualShips, manualEvents); // ?
+        manualBoardController.updateData(manualTerms, manualEvents, manualShips);
+        manualBoardController.renderPlan(lastPlan);
+
+        setStatus("ML plan copied to manual.");
     }
 
     /* settings dialogs */
@@ -206,7 +244,7 @@ public class AppController {
        ===================================================================== */
     public static class TimelineDiagram extends Pane {
 
-        /* размеры и цвета */
+        /* sizes and colors */
         private static final double LABEL_W = 120;   // on the left are the names of the terminals
         private static final double ROW_H   = 40;    // baseline height
         private static final double HOUR_W  = 10;   // width of one hour
@@ -266,7 +304,6 @@ public class AppController {
 
             /* terminal labels + horizontal lines */
             for (int idx = 0; idx < termList.size(); idx++) {
-                /* подпись */
                 Text t = new Text(termList.get(idx));
                 t.setX(4);
                 t.setY(idx * ROW_H + ROW_H * 0.7);
@@ -387,7 +424,7 @@ public class AppController {
             OffsetDateTime cursor = horizonStart;
 
             for (long h = 0; h <= totalHours; h++) {
-                if (cursor.getHour() == 0) {                       // начало суток
+                if (cursor.getHour() == 0) {
                     double x = LABEL_W + h * HOUR_W;
 
                     Line l = new Line(x, 0, x, getPrefHeight());
@@ -402,7 +439,7 @@ public class AppController {
 
                     /* date */
                     Text d = new Text(cursor.toLocalDate().toString());
-                    d.setX(x + 2); d.setY(12);
+                    d.setX(x + 2); d.setY(ROW_H * 0.35);
                     getChildren().add(d);
                 }
                 cursor = cursor.plusHours(1);

@@ -3,30 +3,25 @@
          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
 
-    <!-- ────────────────────────────────────────────────────────────── -->
     <modelVersion>4.0.0</modelVersion>
     <groupId>com.portmanager</groupId>
     <artifactId>portmanager-backend</artifactId>
     <version>1.0-SNAPSHOT</version>
     <packaging>jar</packaging>
 
-    <!-- ─── Versions & common props ─────────────────────────────────── -->
     <properties>
         <java.version>17</java.version>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     </properties>
 
-    <!-- ─── Spring Boot BOM (управляет версиями) ────────────────────── -->
     <parent>
         <groupId>org.springframework.boot</groupId>
         <artifactId>spring-boot-starter-parent</artifactId>
         <version>3.3.0</version>
-        <relativePath/>          <!-- ищем в репозитории, а не в FS -->
+        <relativePath/>
     </parent>
 
-    <!-- ─── Dependencies ────────────────────────────────────────────── -->
     <dependencies>
-
         <!-- Web / REST -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
@@ -57,7 +52,7 @@
             <version>3.0.0</version>
         </dependency>
 
-        <!-- Lombok (только на этапе компиляции) -->
+        <!-- Lombok -->
         <dependency>
             <groupId>org.projectlombok</groupId>
             <artifactId>lombok</artifactId>
@@ -65,14 +60,13 @@
             <scope>provided</scope>
         </dependency>
 
-        <!-- ─── Тестовые зависимости ──────────────────────────────── -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-test</artifactId>
             <scope>test</scope>
         </dependency>
 
-        <!-- WireMock для http-стабов -->
+        <!-- WireMock for http-stubs -->
         <dependency>
             <groupId>org.wiremock</groupId>
             <artifactId>wiremock</artifactId>
@@ -105,9 +99,9 @@
         </dependency>
     </dependencies>
 
-    <!-- ─── Build (compiler + fat-jar) ──────────────────────────────── -->
+    <!-- Build (compiler + fat-jar) -->
     <build>
-        <!-- итоговый файл будет backend.jar -->
+        <!-- the final file will be backend.jar -->
         <finalName>backend</finalName>
 
         <plugins>
@@ -126,7 +120,7 @@
             <plugin>
                 <groupId>org.springframework.boot</groupId>
                 <artifactId>spring-boot-maven-plugin</artifactId>
-                <!-- версия берётся из parent, указывать не нужно -->
+                <!-- version is taken from parent, no need to specify -->
                 <executions>
                     <execution>
                         <goals><goal>repackage</goal></goals>
