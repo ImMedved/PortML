@@ -46,3 +46,25 @@ CREATE TABLE pairwise_feedback (
     plan_b_waiting    DOUBLE PRECISION,
     chosen_plan       CHAR(1)
 );
+
+CREATE TABLE terminal_fuel_supported (
+    terminal_id BIGINT REFERENCES terminal(id) ON DELETE CASCADE,
+    fuel_type   VARCHAR(32) NOT NULL
+);
+
+ALTER TABLE ships
+    ADD COLUMN deadweight               DOUBLE PRECISION,
+    ADD COLUMN flag_country             VARCHAR(64),
+    ADD COLUMN imo_number               VARCHAR(16),
+    ADD COLUMN ship_type                VARCHAR(32),
+    ADD COLUMN requires_customs_clearance BOOLEAN,
+    ADD COLUMN hazard_class             VARCHAR(32),
+    ADD COLUMN temperature_controlled   BOOLEAN,
+    ADD COLUMN fuel_type                VARCHAR(32),
+    ADD COLUMN emission_rating          VARCHAR(32),
+    ADD COLUMN arrival_port             VARCHAR(32),
+    ADD COLUMN next_port                VARCHAR(32),
+    ADD COLUMN requires_pilot           BOOLEAN,
+    ADD COLUMN arrival_window_start     TIMESTAMPTZ,
+    ADD COLUMN arrival_window_end       TIMESTAMPTZ,
+    ADD COLUMN expected_delay_hours     DOUBLE PRECISION;

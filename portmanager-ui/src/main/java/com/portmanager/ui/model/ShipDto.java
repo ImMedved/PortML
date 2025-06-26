@@ -8,42 +8,53 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.Map;
 
-@Getter
+/**
+ * DTO describing a vessel (client side).
+ * New “advanced-context” fields are marked with // NEW
+ */
+@Getter @Setter
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class ShipDto {
-    @Setter
+
+    /* ---- legacy fields (kept as-is) ------------------------------------ */
     private String id;
-    @Setter
     private LocalDateTime arrivalTime;
-    @Setter
     private double length;
-    @Setter
     private double draft;
-    @Setter
     private String cargoType;
-    @Setter
     private double estDurationHours;
     private String priority;
 
-    /* static factory */
-    public static ShipDto fromJson(Map<String, Object> map) {
-        return new ShipDto(
-                (String)  map.get("id"),
-                LocalDateTime.parse((String) map.get("arrivalTime"), DateTimeFormatter.ISO_DATE_TIME),
-                ((Number) map.get("length")).doubleValue(),
-                ((Number) map.get("draft")).doubleValue(),
-                (String)  map.get("cargoType"),
-                ((Number) map.get("estDurationHours")).doubleValue(),
-                (String)  map.get("priority")
-        );
-    }
+    /* ---- extended context (20+ new fields) ----------------------------- */
+    private double  deadweight;                // NEW
+    private String  flagCountry;               // NEW
+    private String  imoNumber;                 // NEW
+    private String  shipType;                  // NEW  (shall match cargoType)
+    private boolean requiresCustomsClearance;  // NEW
+    private String  hazardClass;               // NEW
+    private boolean temperatureControlled;     // NEW
+    private String  fuelType;                  // NEW
+    private String  emissionRating;            // NEW
+    private String  arrivalPort;               // NEW
+    private String  nextPort;                  // NEW
+    private boolean requiresPilot;             // NEW
+    private LocalDateTime arrivalWindowStart;  // NEW
+    private LocalDateTime arrivalWindowEnd;    // NEW
+    private double  expectedDelayHours;        // NEW
 
-    /* ctors / getters / setters */
+    /* ---- constructors -------------------------------------------------- */
+
+    /** Empty ctor for Jackson / FX-editing */
     public ShipDto() {}
 
-    public ShipDto(String id, LocalDateTime arrivalTime,
-                   double length, double draft, String cargoType,
-                   double estDurationHours, String priority) {
+    /** Constructor with the “old” minimal set of fields */
+    public ShipDto(String id,
+                   LocalDateTime arrivalTime,
+                   double length,
+                   double draft,
+                   String cargoType,
+                   double estDurationHours,
+                   String priority) {
         this.id = id;
         this.arrivalTime = arrivalTime;
         this.length = length;
@@ -53,11 +64,50 @@ public class ShipDto {
         this.priority = priority;
     }
 
-    public LocalDateTime getArrival() {
-        return arrivalTime;
+    /* ---- convenience static factory (used by RandomData) -------------- */
+    @SuppressWarnings("unchecked")
+    public static ShipDto fromJson(Map<String, Object> m) {
+        ShipDto s = new ShipDto(
+                (String)  m.get("id"),
+                LocalDateTime.parse((String) m.get("arrivalTime"), DateTimeFormatter.ISO_DATE_TIME),
+                ((Number) m.get("length")).doubleValue(),
+                ((Number) m.get("draft")).doubleValue(),
+                (String)  m.get("cargoType"),
+                ((Number) m.get("estDurationHours")).doubleValue(),
+                (String)  m.get("priority")
+        );
+
+        /* optional extended fields (if server already provides them) */
+        s.deadweight               = num(m, "deadweight");
+        s.flagCountry              = (String)  m.getOrDefault("flagCountry", null);
+        s.imoNumber                = (String)  m.getOrDefault("imoNumber", null);
+        s.shipType                 = (String)  m.getOrDefault("shipType", null);
+        s.requiresCustomsClearance = bool(m, "requiresCustomsClearance");
+        s.hazardClass              = (String)  m.getOrDefault("hazardClass", null);
+        s.temperatureControlled    = bool(m, "temperatureControlled");
+        s.fuelType                 = (String)  m.getOrDefault("fuelType", null);
+        s.emissionRating           = (String)  m.getOrDefault("emissionRating", null);
+        s.arrivalPort              = (String)  m.getOrDefault("arrivalPort", null);
+        s.nextPort                 = (String)  m.getOrDefault("nextPort", null);
+        s.requiresPilot            = bool(m, "requiresPilot");
+        s.expectedDelayHours       = num(m, "expectedDelayHours");
+
+        String aws = (String) m.get("arrivalWindowStart");
+        if (aws != null) s.arrivalWindowStart = LocalDateTime.parse(aws, DateTimeFormatter.ISO_DATE_TIME);
+        String awe = (String) m.get("arrivalWindowEnd");
+        if (awe != null) s.arrivalWindowEnd   = LocalDateTime.parse(awe, DateTimeFormatter.ISO_DATE_TIME);
+
+        return s;
     }
 
-    public void setArrival(LocalDateTime arrival) {
-        this.arrivalTime = arrival;
+    /* ---- helpers for factory ------------------------------------------ */
+    private static boolean bool(Map<String, Object> m, String k) {
+        Object v = m.get(k); return v instanceof Boolean b && b;
     }
+    private static double num(Map<String, Object> m, String k) {
+        Object v = m.get(k); return v instanceof Number n ? n.doubleValue() : 0.0;
+    }
+
+    /* ---- legacy shortcut (used in BoardController) -------------------- */
+    public LocalDateTime getArrival() { return arrivalTime; }
 }

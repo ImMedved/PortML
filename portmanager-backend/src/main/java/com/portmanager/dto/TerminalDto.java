@@ -19,5 +19,6 @@ public record TerminalDto(
         double maxLength,
         double maxDraft,
         @JsonProperty("allowedCargoTypes")
-        List<String> cargoTypes
+        List<String> cargoTypes,
+        List<String> fuelSupported
 ) {}

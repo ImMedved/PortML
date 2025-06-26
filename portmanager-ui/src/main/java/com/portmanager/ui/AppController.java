@@ -60,6 +60,12 @@ public class AppController {
     @FXML private TableView<ShipRow> shipTable;
     @FXML private TableColumn<ShipRow,String> shipColumn, arrivalColumn, cargoColumn,
             priorityColumn, lengthColumn, draftColumn, durationColumn;
+
+    @FXML private TableColumn<ShipRow,String> shipTypeColumn, deadweightColumn, flagColumn,
+            imoColumn, fuelColumn, emissionColumn, arrivalPortColumn, nextPortColumn,
+            customsColumn, pilotColumn, tempColumn, hazardColumn,
+            windowStartColumn, windowEndColumn, delayColumn;
+
     private final ManualBoardController manualBoardController = new ManualBoardController();
 
     private final BackendClient backendClient = BackendClient.get();
@@ -85,6 +91,25 @@ public class AppController {
         lengthColumn.setCellValueFactory(d -> new SimpleStringProperty(d.getValue().getLength()));
         draftColumn.setCellValueFactory(d -> new SimpleStringProperty(d.getValue().getDraft()));
         durationColumn.setCellValueFactory(d -> new SimpleStringProperty(d.getValue().getDuration()));
+
+        shipTypeColumn.setCellValueFactory(d -> new SimpleStringProperty(d.getValue().getShipType()));
+        deadweightColumn.setCellValueFactory(d -> new SimpleStringProperty(d.getValue().getDeadweight()));
+        flagColumn.setCellValueFactory(d -> new SimpleStringProperty(d.getValue().getFlagCountry()));
+        imoColumn.setCellValueFactory(d -> new SimpleStringProperty(d.getValue().getImoNumber()));
+        fuelColumn.setCellValueFactory(d -> new SimpleStringProperty(d.getValue().getFuelType()));
+        emissionColumn.setCellValueFactory(d -> new SimpleStringProperty(d.getValue().getEmissionRating()));
+
+        arrivalPortColumn.setCellValueFactory(d -> new SimpleStringProperty(d.getValue().getArrivalPort()));
+        nextPortColumn.setCellValueFactory(d -> new SimpleStringProperty(d.getValue().getNextPort()));
+
+        customsColumn.setCellValueFactory(d -> new SimpleStringProperty(d.getValue().getRequiresCustomsClearance()));
+        pilotColumn.setCellValueFactory(d -> new SimpleStringProperty(d.getValue().getRequiresPilot()));
+        tempColumn.setCellValueFactory(d -> new SimpleStringProperty(d.getValue().getTemperatureControlled()));
+        hazardColumn.setCellValueFactory(d -> new SimpleStringProperty(d.getValue().getHazardClass()));
+
+        windowStartColumn.setCellValueFactory(d -> new SimpleStringProperty(d.getValue().getArrivalWindowStart()));
+        windowEndColumn.setCellValueFactory(d -> new SimpleStringProperty(d.getValue().getArrivalWindowEnd()));
+        delayColumn.setCellValueFactory(d -> new SimpleStringProperty(d.getValue().getExpectedDelayHours()));
 
         shipTable.setOnMouseClicked(e ->
                 Optional.ofNullable(shipTable.getSelectionModel().getSelectedItem())
