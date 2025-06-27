@@ -27,7 +27,7 @@ def plan(request: PlanRequestModel) -> PlanResponseModel:
     waits = []
     for asg in schedule:
         ship  = next(s for s in request.ships if s.id == asg["vesselId"])
-        start = asg["startTime"]           # aware dt
+        start = asg["startTime"]
         eta   = ship.arrivalTime
         if eta.tzinfo is None:             # if without zone - we assume that it is UTC
             eta = eta.replace(tzinfo=start.tzinfo or dt.timezone.utc)

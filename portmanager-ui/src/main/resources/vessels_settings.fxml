@@ -3,27 +3,59 @@
 <?import javafx.scene.control.*?>
 <?import javafx.scene.layout.*?>
 
-<AnchorPane xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml"
+<!-- Settings dialog – vessels -->
+<AnchorPane xmlns:fx="http://javafx.com/fxml"
             fx:controller="com.portmanager.ui.controller.VesselSettingsController">
-    <VBox spacing="10" prefWidth="600" prefHeight="400"
-          AnchorPane.topAnchor="0" AnchorPane.bottomAnchor="0"
-          AnchorPane.leftAnchor="0" AnchorPane.rightAnchor="0">
 
-        <TableView fx:id="shipTable" prefHeight="300">
+    <VBox spacing="10" prefWidth="1250" prefHeight="550"
+          AnchorPane.topAnchor="0"   AnchorPane.bottomAnchor="0"
+          AnchorPane.leftAnchor="0"  AnchorPane.rightAnchor="0">
+
+        <!-- table -->
+        <TableView fx:id="shipTable" prefHeight="480" editable="true">
             <columns>
-                <TableColumn fx:id="idColumn" text="ID"/>
-                <TableColumn fx:id="lengthColumn" text="Length"/>
-                <TableColumn fx:id="draftColumn" text="Draft"/>
-                <TableColumn fx:id="arrivalColumn" text="Arrival"/>
-                <TableColumn fx:id="durationColumn" text="Hours"/>
-                <TableColumn fx:id="cargoColumn" text="Cargo Type"/>
+                <!-- identity / basic size -->
+                <TableColumn fx:id="idColumn"      text="ID"            prefWidth="60"/>
+                <TableColumn fx:id="lengthColumn"  text="Len (m)"       prefWidth="70"/>
+                <TableColumn fx:id="draftColumn"   text="Draft (m)"     prefWidth="80"/>
+                <TableColumn fx:id="deadweightColumn" text="DWT (t)"    prefWidth="90"/>
+
+                <!-- types -->
+                <TableColumn fx:id="cargoColumn"    text="Cargo"        prefWidth="100"/>
+                <TableColumn fx:id="shipTypeColumn" text="Ship Type"    prefWidth="100"/>
+                <TableColumn fx:id="fuelColumn"     text="Fuel"         prefWidth="80"/>
+                <TableColumn fx:id="emissionColumn" text="CO₂ Rating"   prefWidth="90"/>
+
+                <!-- registry -->
+                <TableColumn fx:id="flagColumn"     text="Flag"         prefWidth="60"/>
+                <TableColumn fx:id="imoColumn"      text="IMO №"        prefWidth="100"/>
+
+                <!-- routing -->
+                <TableColumn fx:id="arrivalPortColumn" text="Arr Port"  prefWidth="80"/>
+                <TableColumn fx:id="nextPortColumn"    text="Next Port" prefWidth="80"/>
+
+                <!-- time fields -->
+                <TableColumn fx:id="arrivalColumn"      text="ETA"         prefWidth="170"/>
+                <TableColumn fx:id="windowStartColumn"  text="Window Start" prefWidth="170"/>
+                <TableColumn fx:id="windowEndColumn"    text="Window End"  prefWidth="170"/>
+                <TableColumn fx:id="durationColumn"     text="Service h"   prefWidth="80"/>
+                <TableColumn fx:id="delayColumn"        text="Exp. Delay h" prefWidth="90"/>
+
+                <!-- special flags -->
+                <TableColumn fx:id="hazardColumn"   text="Hazard"      prefWidth="90"/>
+                <TableColumn fx:id="customsColumn"  text="Customs?"    prefWidth="80"/>
+                <TableColumn fx:id="pilotColumn"    text="Pilot?"      prefWidth="70"/>
+                <TableColumn fx:id="tempColumn"     text="Temp-Ctrl?"  prefWidth="90"/>
+
+                <!-- misc -->
+                <TableColumn fx:id="priorityColumn" text="Priority"    prefWidth="80"/>
             </columns>
         </TableView>
 
+        <!-- toolbar -->
         <HBox spacing="10">
             <Button text="Add Vessel" onAction="#onAddShip"/>
-            <Button text="Confirm" onAction="#onConfirm"/>
+            <Button text="Confirm"    onAction="#onConfirm"/>
         </HBox>
-
     </VBox>
 </AnchorPane>
