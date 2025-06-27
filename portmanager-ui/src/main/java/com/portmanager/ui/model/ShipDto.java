@@ -26,21 +26,21 @@ public class ShipDto {
     private String priority;
 
     /* ---- extended context (20+ new fields) ----------------------------- */
-    private double  deadweight;                // NEW
-    private String  flagCountry;               // NEW
-    private String  imoNumber;                 // NEW
-    private String  shipType;                  // NEW  (shall match cargoType)
-    private boolean requiresCustomsClearance;  // NEW
-    private String  hazardClass;               // NEW
-    private boolean temperatureControlled;     // NEW
-    private String  fuelType;                  // NEW
-    private String  emissionRating;            // NEW
-    private String  arrivalPort;               // NEW
-    private String  nextPort;                  // NEW
-    private boolean requiresPilot;             // NEW
-    private LocalDateTime arrivalWindowStart;  // NEW
-    private LocalDateTime arrivalWindowEnd;    // NEW
-    private double  expectedDelayHours;        // NEW
+    private double  deadweight;
+    private String  flagCountry;
+    private String  imoNumber;
+    private String  shipType;
+    private boolean requiresCustomsClearance;
+    private String  hazardClass;
+    private boolean temperatureControlled;
+    private String  fuelType;
+    private String  emissionRating;
+    private String  arrivalPort;
+    private String  nextPort;
+    private boolean requiresPilot;
+    private LocalDateTime arrivalWindowStart;
+    private LocalDateTime arrivalWindowEnd;
+    private double  expectedDelayHours;
 
     /* ---- constructors -------------------------------------------------- */
 

@@ -59,9 +59,12 @@ public class ManualBoardController {
         if (plan == null) return;
 
         /* -------- prepare horizon & terminals (in order of manualTerms!) -------- */
-        termList = terminals.stream()
+        termList = new ArrayList<>();
+        termList.add("CUSTOMS");
+        termList.add("RAID");
+        termList.addAll(terminals.stream()
                 .map(t -> String.valueOf(t.getId()))
-                .toList();
+                .toList());
 
         horizonStart = OffsetDateTime.MAX;
         horizonEnd   = OffsetDateTime.MIN;
@@ -154,7 +157,8 @@ public class ManualBoardController {
             ShipDto dto = findShip(si.getVesselId());
             if (dto == null) continue; // safety
 
-            int row = termList.indexOf(si.getTerminalId());
+            String termId = "0".equals(si.getTerminalId()) ? "CUSTOMS" : si.getTerminalId();
+            int row = termList.indexOf(termId);
             if (row < 0) continue;
 
             OffsetDateTime s = OffsetDateTime.parse(si.getStartTime());
@@ -165,7 +169,12 @@ public class ManualBoardController {
             double h = ROW_H - 2;
 
             Rectangle r = new Rectangle(x, y, w, h);
-            r.setFill(Color.web("#42A5F5"));
+            if ("CUSTOMS".equals(termId))
+                r.setFill(Color.web("#9C27B0"));
+            else if ("RAID".equals(termId))
+                r.setFill(Color.web("#FFC107"));
+            else
+                r.setFill(Color.web("#42A5F5"));
             r.setStroke(Color.BLACK);
             r.setCursor(Cursor.OPEN_HAND);
             pane.getChildren().add(r);
@@ -241,7 +250,10 @@ public class ManualBoardController {
             errorReason = ship.getId() + ": goes beyond the left border";
             restore(ship); return false;
         }
-
+        if ("CUSTOMS".equals(termId) || "RAID".equals(termId)){
+            errorReason = "Editing on virtual line is not allowed";
+            restore(ship); return false;
+        }
         /* --- checks --- */
         TerminalDto term = findTerminal(termId);
         if (newStart.isBefore(ship.getArrivalTime().atOffset(ZoneOffset.UTC))) {
