@@ -60,6 +60,12 @@ public class AppController {
     @FXML private TableView<ShipRow> shipTable;
     @FXML private TableColumn<ShipRow,String> shipColumn, arrivalColumn, cargoColumn,
             priorityColumn, lengthColumn, draftColumn, durationColumn;
+
+    @FXML private TableColumn<ShipRow,String> shipTypeColumn, deadweightColumn, flagColumn,
+            imoColumn, fuelColumn, emissionColumn, arrivalPortColumn, nextPortColumn,
+            customsColumn, pilotColumn, tempColumn, hazardColumn,
+            windowStartColumn, windowEndColumn, delayColumn;
+
     private final ManualBoardController manualBoardController = new ManualBoardController();
 
     private final BackendClient backendClient = BackendClient.get();
@@ -85,6 +91,25 @@ public class AppController {
         lengthColumn.setCellValueFactory(d -> new SimpleStringProperty(d.getValue().getLength()));
         draftColumn.setCellValueFactory(d -> new SimpleStringProperty(d.getValue().getDraft()));
         durationColumn.setCellValueFactory(d -> new SimpleStringProperty(d.getValue().getDuration()));
+
+        shipTypeColumn.setCellValueFactory(d -> new SimpleStringProperty(d.getValue().getShipType()));
+        deadweightColumn.setCellValueFactory(d -> new SimpleStringProperty(d.getValue().getDeadweight()));
+        flagColumn.setCellValueFactory(d -> new SimpleStringProperty(d.getValue().getFlagCountry()));
+        imoColumn.setCellValueFactory(d -> new SimpleStringProperty(d.getValue().getImoNumber()));
+        fuelColumn.setCellValueFactory(d -> new SimpleStringProperty(d.getValue().getFuelType()));
+        emissionColumn.setCellValueFactory(d -> new SimpleStringProperty(d.getValue().getEmissionRating()));
+
+        arrivalPortColumn.setCellValueFactory(d -> new SimpleStringProperty(d.getValue().getArrivalPort()));
+        nextPortColumn.setCellValueFactory(d -> new SimpleStringProperty(d.getValue().getNextPort()));
+
+        customsColumn.setCellValueFactory(d -> new SimpleStringProperty(d.getValue().getRequiresCustomsClearance()));
+        pilotColumn.setCellValueFactory(d -> new SimpleStringProperty(d.getValue().getRequiresPilot()));
+        tempColumn.setCellValueFactory(d -> new SimpleStringProperty(d.getValue().getTemperatureControlled()));
+        hazardColumn.setCellValueFactory(d -> new SimpleStringProperty(d.getValue().getHazardClass()));
+
+        windowStartColumn.setCellValueFactory(d -> new SimpleStringProperty(d.getValue().getArrivalWindowStart()));
+        windowEndColumn.setCellValueFactory(d -> new SimpleStringProperty(d.getValue().getArrivalWindowEnd()));
+        delayColumn.setCellValueFactory(d -> new SimpleStringProperty(d.getValue().getExpectedDelayHours()));
 
         shipTable.setOnMouseClicked(e ->
                 Optional.ofNullable(shipTable.getSelectionModel().getSelectedItem())
@@ -265,12 +290,19 @@ public class AppController {
             if (plan == null) return;
 
             /* data preparation */
-
             /* terminals (save the order of addition) */
             LinkedHashSet<String> termSet = new LinkedHashSet<>();
             terminals.forEach(t -> termSet.add(String.valueOf(t.getId())));
-            plan.getSchedule().forEach(si -> termSet.add(si.getTerminalId()));
+            plan.getSchedule().forEach(s -> termSet.add(s.getTerminalId()));
+
+            termSet.add("CUSTOMS");          // customs inspection line
+            termSet.add("RAID");             // anchorage / waiting line
+
             List<String> termList = new ArrayList<>(termSet);
+            termList.remove("CUSTOMS");
+            termList.remove("RAID");
+            termList.add(0, "CUSTOMS");
+            termList.add(1, "RAID");
 
             /* time horizon */
             horizonStart = OffsetDateTime.MAX;
@@ -302,26 +334,20 @@ public class AppController {
             /* vertical grid (days/weeks) */
             drawTimeGrid(totalHours);
 
-            /* terminal labels + horizontal lines */
-            for (int idx = 0; idx < termList.size(); idx++) {
-                Text t = new Text(termList.get(idx));
-                t.setX(4);
-                t.setY(idx * ROW_H + ROW_H * 0.7);
-                getChildren().add(t);
+            for (int i = 0; i < termList.size(); i++) {
+                String name = termList.get(i);
+                Text lbl = new Text(name);
+                lbl.setX(4);
+                lbl.setY(i * ROW_H + ROW_H * 0.7);
+                getChildren().add(lbl);
 
-                /* thin line */
-                Line h = new Line(0,
-                        idx * ROW_H,
-                        LABEL_W + totalHours * HOUR_W,
-                        idx * ROW_H);
+                Line h = new Line(0, i * ROW_H,
+                        LABEL_W + totalHours * HOUR_W, i * ROW_H);
                 h.setStroke(Color.LIGHTGRAY);
                 getChildren().add(h);
             }
-            /* lower limit */
-            Line bottom = new Line(0,
-                    termList.size() * ROW_H,
-                    LABEL_W + totalHours * HOUR_W,
-                    termList.size() * ROW_H);
+            Line bottom = new Line(0, termList.size() * ROW_H,
+                    LABEL_W + totalHours * HOUR_W, termList.size() * ROW_H);
             bottom.setStroke(Color.LIGHTGRAY);
             getChildren().add(bottom);
 
@@ -336,32 +362,59 @@ public class AppController {
                 double w = durHours(s, e) * HOUR_W;
 
                 if (ev.getTerminalId() == null || ev.getTerminalId().isBlank()) {
-                    /* weather → all vertical */
                     Rectangle r = new Rectangle(x, 0, w, termList.size() * ROW_H);
-                    r.setFill(Color.rgb(30, 144, 255, 0.25));   // blue
+                    r.setFill(Color.rgb(30, 144, 255, 0.25));
                     getChildren().add(r);
                 } else {
                     int row = termList.indexOf(ev.getTerminalId());
                     if (row < 0) continue;
-
                     Rectangle r = new Rectangle(x, row * ROW_H, w, ROW_H);
-                    r.setFill(Color.rgb(255, 0, 0, 0.35));      // red
+                    r.setFill(Color.rgb(255, 0, 0, 0.35));
                     getChildren().add(r);
                 }
             }
 
-            /* calculation of "paths" for simultaneous vessels */
-            Map<String, List<List<Interval>>> lanes = new HashMap<>();
-            Map<ScheduleItemDto, Integer> whichLane = new HashMap<>();
 
-            termList.forEach(t -> lanes.put(t, new ArrayList<>()));
+           /*  5. Build complete list of schedule items
+                • original server schedule
+                • synthetic RAID waiting intervals
+                • map '0' terminal → CUSTOMS line */
+            List<ScheduleItemDto> items = new ArrayList<>(plan.getSchedule());
+
+            /* quick look-up for ship ETA (+ expected delay) */
+            Map<String, OffsetDateTime> etaByShip = new HashMap<>();
+            ships.forEach(s -> etaByShip.put(s.getId(),
+                    s.getArrivalTime()
+                            .plusHours((long) s.getExpectedDelayHours())
+                            .atOffset(ZoneOffset.UTC)));
 
             for (ScheduleItemDto si : plan.getSchedule()) {
+                /* customs line remap */
+                if ("0".equals(si.getTerminalId())) si.setTerminalId("CUSTOMS");
+
+                /* RAID waiting interval */
+                OffsetDateTime startService = OffsetDateTime.parse(si.getStartTime());
+                OffsetDateTime eta = etaByShip.get(si.getVesselId());
+                if (eta != null && startService.isAfter(eta)) {
+                    ScheduleItemDto wait = new ScheduleItemDto();
+                    wait.setVesselId(si.getVesselId());
+                    wait.setTerminalId("RAID");
+                    wait.setStartTime(eta.toString());
+                    wait.setEndTime(startService.toString());
+                    items.add(wait);
+                }
+            }
+
+        /* 6. Lane packing (avoid overlaps) */
+            Map<String, List<List<Interval>>> lanes = new HashMap<>();
+            termList.forEach(t -> lanes.put(t, new ArrayList<>()));
+            Map<ScheduleItemDto, Integer> laneOf = new HashMap<>();
+
+            for (ScheduleItemDto si : items) {
                 String term = si.getTerminalId();
                 Interval cur = new Interval(
                         OffsetDateTime.parse(si.getStartTime()),
-                        OffsetDateTime.parse(si.getEndTime())
-                );
+                        OffsetDateTime.parse(si.getEndTime()));
 
                 List<List<Interval>> termLanes = lanes.get(term);
                 int idx = 0;
@@ -370,14 +423,13 @@ public class AppController {
 
                 if (idx == termLanes.size()) termLanes.add(new ArrayList<>());
                 termLanes.get(idx).add(cur);
-                whichLane.put(si, idx);
+                laneOf.put(si, idx);
             }
 
-            /* terminal line division degree */
-            Map<String, Integer> laneCount = new HashMap<>();
-            lanes.forEach((k, v) -> laneCount.put(k, Math.max(1, v.size())));
+            Map<String,Integer> laneCount = new HashMap<>();
+            lanes.forEach((k,v) -> laneCount.put(k, Math.max(1, v.size())));
 
-            /* quick access to ShipDto for a click */
+            /* ship map for click handler */
             Map<String, ShipDto> shipById = new HashMap<>();
             ships.forEach(s -> shipById.put(s.getId(), s));
 
@@ -387,9 +439,9 @@ public class AppController {
                 int row = termList.indexOf(term);
                 if (row < 0) continue;
 
-                int lanesN = laneCount.get(term);
+                int lanesN  = laneCount.get(term);
                 double laneH = ROW_H / lanesN;
-                int laneIdx = whichLane.get(si);
+                int laneIdx = laneOf.get(si);
 
                 OffsetDateTime s = OffsetDateTime.parse(si.getStartTime());
                 OffsetDateTime e = OffsetDateTime.parse(si.getEndTime());
@@ -399,7 +451,15 @@ public class AppController {
                 double y = row * ROW_H + laneIdx * laneH;
 
                 Rectangle rect = new Rectangle(x, y, w, laneH - 2);
-                rect.setFill(Color.web("#8BC34A"));    // light-green
+
+                /* color coding */
+                if ("CUSTOMS".equals(term)) {
+                    rect.setFill(Color.web("#9C27B0"));           // purple
+                } else if ("RAID".equals(term)) {
+                    rect.setFill(Color.web("#FFC107"));           // amber
+                } else {
+                    rect.setFill(Color.web("#8BC34A"));           // green
+                }
                 rect.setStroke(Color.BLACK);
                 getChildren().add(rect);
 
@@ -408,38 +468,34 @@ public class AppController {
                 label.setY(y + laneH * 0.7);
                 getChildren().add(label);
 
-                /* click → info about the vessel */
                 ShipDto dto = shipById.get(si.getVesselId());
                 if (dto != null) {
-                    rect.addEventHandler(MouseEvent.MOUSE_CLICKED, e2 -> ShipInfoDialog.show(dto));
-                    label.addEventHandler(MouseEvent.MOUSE_CLICKED, e2 -> ShipInfoDialog.show(dto));
+                    rect.setOnMouseClicked(e2 -> ShipInfoDialog.show(dto));
+                    label.setOnMouseClicked(e2 -> ShipInfoDialog.show(dto));
                 }
             }
         }
 
         /* private helpers */
 
-        /** Vertical lines by day, thickened - by Mondays ☕ */
         private void drawTimeGrid(long totalHours) {
             OffsetDateTime cursor = horizonStart;
-
             for (long h = 0; h <= totalHours; h++) {
                 if (cursor.getHour() == 0) {
                     double x = LABEL_W + h * HOUR_W;
-
-                    Line l = new Line(x, 0, x, getPrefHeight());
+                    Line v = new Line(x, 0, x, getPrefHeight());
                     if (cursor.getDayOfWeek() == DayOfWeek.MONDAY) {
-                        l.setStrokeWidth(2);
-                        l.setStroke(Color.DARKGRAY);
+                        v.setStrokeWidth(2);
+                        v.setStroke(Color.DARKGRAY);
                     } else {
-                        l.setStrokeWidth(1);
-                        l.setStroke(Color.GRAY);
+                        v.setStrokeWidth(1);
+                        v.setStroke(Color.GRAY);
                     }
-                    getChildren().add(l);
+                    getChildren().add(v);
 
-                    /* date */
                     Text d = new Text(cursor.toLocalDate().toString());
-                    d.setX(x + 2); d.setY(ROW_H * 0.35);
+                    d.setX(x + 2);
+                    d.setY(ROW_H * 0.35);
                     getChildren().add(d);
                 }
                 cursor = cursor.plusHours(1);

@@ -50,7 +50,6 @@
                 <Label fx:id="manualErrorLabel" textFill="red" style="-fx-padding: 0 0 4 8;" />
 
                 <SplitPane orientation="VERTICAL" dividerPositions="0.65">
-                    <!-- верхняя часть — Manual plan (просто ставим уже готовый ScrollPane) -->
                     <ScrollPane fx:id="manualScroll"
                                 prefHeight="240"
                                 fitToWidth="false"
@@ -58,7 +57,6 @@
                         <Pane fx:id="manualPane"/>
                     </ScrollPane>
 
-                    <!-- нижняя часть — таблица расписания -->
                     <AnchorPane fx:id="scheduleRoot"
                                 minHeight="120"
                                 prefHeight="240"/>
@@ -67,15 +65,33 @@
 
             <!-- right: ships + status -->
             <VBox spacing="6" style="-fx-padding:6;">
-                <TableView fx:id="shipTable" prefHeight="400">
+                <TableView fx:id="shipTable" prefHeight="600">
                     <columns>
-                        <TableColumn fx:id="arrivalColumn"  text="Arrival"/>
-                        <TableColumn fx:id="shipColumn"     text="Vessel"/>
+                        <!-- basic -->
+                        <TableColumn fx:id="arrivalColumn"  text="ETA"/>
+                        <TableColumn fx:id="shipColumn"     text="ID"/>
                         <TableColumn fx:id="cargoColumn"    text="Cargo"/>
+                        <TableColumn fx:id="shipTypeColumn" text="Ship Type"/>
                         <TableColumn fx:id="priorityColumn" text="Priority"/>
                         <TableColumn fx:id="lengthColumn"   text="Len m"/>
                         <TableColumn fx:id="draftColumn"    text="Draft m"/>
-                        <TableColumn fx:id="durationColumn" text="Hours"/>
+                        <TableColumn fx:id="deadweightColumn" text="DWT t"/>
+                        <TableColumn fx:id="durationColumn" text="Stay h"/>
+                        <!-- flags etc. -->
+                        <TableColumn fx:id="flagColumn"     text="Flag"/>
+                        <TableColumn fx:id="imoColumn"      text="IMO"/>
+                        <TableColumn fx:id="fuelColumn"     text="Fuel"/>
+                        <TableColumn fx:id="emissionColumn" text="Emission"/>
+                        <!-- logistics -->
+                        <TableColumn fx:id="arrivalPortColumn" text="From"/>
+                        <TableColumn fx:id="nextPortColumn"    text="Next"/>
+                        <TableColumn fx:id="customsColumn"     text="Customs?"/>
+                        <TableColumn fx:id="pilotColumn"       text="Pilot?"/>
+                        <TableColumn fx:id="hazardColumn"      text="Hazard"/>
+                        <TableColumn fx:id="tempColumn"        text="TempCtrl?"/>
+                        <TableColumn fx:id="windowStartColumn" text="Window Start"/>
+                        <TableColumn fx:id="windowEndColumn"   text="Window End"/>
+                        <TableColumn fx:id="delayColumn"       text="ExpDelay h"/>
                     </columns>
                 </TableView>
 

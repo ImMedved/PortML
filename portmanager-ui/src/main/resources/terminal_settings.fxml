@@ -3,28 +3,31 @@
 <?import javafx.scene.control.*?>
 <?import javafx.scene.layout.*?>
 
-<AnchorPane xmlns="http://javafx.com/javafx/8"
-            xmlns:fx="http://javafx.com/fxml"
+<!-- Settings dialog – terminals -->
+<AnchorPane xmlns:fx="http://javafx.com/fxml"
             fx:controller="com.portmanager.ui.controller.TerminalSettingsController">
 
-    <VBox spacing="10" prefWidth="600" prefHeight="400"
-          AnchorPane.topAnchor="0" AnchorPane.bottomAnchor="0"
-          AnchorPane.leftAnchor="0" AnchorPane.rightAnchor="0">
+    <VBox spacing="10" prefWidth="760" prefHeight="420"
+          AnchorPane.topAnchor="0"   AnchorPane.bottomAnchor="0"
+          AnchorPane.leftAnchor="0"  AnchorPane.rightAnchor="0">
 
-        <TableView fx:id="terminalTable" prefHeight="300">
+        <!-- table -->
+        <TableView fx:id="terminalTable" prefHeight="350">
             <columns>
-                <TableColumn fx:id="idColumn" text="ID"/>
-                <TableColumn fx:id="nameColumn" text="Name"/>
-                <TableColumn fx:id="lengthColumn" text="Max Length"/>
-                <TableColumn fx:id="draftColumn" text="Max Draft"/>
-                <TableColumn fx:id="cargoColumn" text="Cargo Types"/>
+                <TableColumn fx:id="idColumn"     text="ID"         prefWidth="60"/>
+                <TableColumn fx:id="nameColumn"   text="Name"       prefWidth="120"/>
+                <TableColumn fx:id="lengthColumn" text="Max Length" prefWidth="100"/>
+                <TableColumn fx:id="draftColumn"  text="Max Draft"  prefWidth="90"/>
+                <TableColumn fx:id="cargoColumn"  text="Cargo Types" prefWidth="160"/>
+                <!-- new column – fuels -->
+                <TableColumn fx:id="fuelColumn"   text="Fuel Supported" prefWidth="140"/>
             </columns>
         </TableView>
 
+        <!-- toolbar -->
         <HBox spacing="10" alignment="CENTER_RIGHT">
             <Button text="Add Terminal" onAction="#onAddTerminal"/>
-            <Button text="Confirm" onAction="#onConfirm"/>
+            <Button text="Confirm"      onAction="#onConfirm"/>
         </HBox>
-
     </VBox>
 </AnchorPane>
