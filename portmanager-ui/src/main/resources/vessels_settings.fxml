@@ -55,6 +55,7 @@
         <!-- toolbar -->
         <HBox spacing="10">
             <Button text="Add Vessel" onAction="#onAddShip"/>
+            <Button text="Delete Selected" onAction="#onDeleteShip"/>
             <Button text="Confirm"    onAction="#onConfirm"/>
         </HBox>
     </VBox>

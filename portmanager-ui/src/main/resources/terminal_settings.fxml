@@ -27,6 +27,7 @@
         <!-- toolbar -->
         <HBox spacing="10" alignment="CENTER_RIGHT">
             <Button text="Add Terminal" onAction="#onAddTerminal"/>
+            <Button text="Delete Selected" onAction="#onDeleteTerminal"/>
             <Button text="Confirm"      onAction="#onConfirm"/>
         </HBox>
     </VBox>

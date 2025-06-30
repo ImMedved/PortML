@@ -47,7 +47,7 @@ public class ScenarioGeneratorService {
 
     @Transactional
     public void generate(int shipCount) {
-
+        shipCount = 500;
         /* ---------- wipe previous data ---------- */
         closureRepo.deleteAllInBatch();
         weatherRepo.deleteAllInBatch();

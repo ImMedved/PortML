@@ -1,6 +1,7 @@
 package com.portmanager.ui.controller;
 
 import com.portmanager.ui.model.TerminalDto;
+import com.portmanager.ui.service.BackendClient;
 import javafx.beans.property.ReadOnlyObjectWrapper;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
@@ -85,4 +86,18 @@ public class TerminalSettingsController implements SettingsResult<TerminalDto> {
     @Override public List<TerminalDto> getData(){ return terminals; }
     @Override public void setData(List<TerminalDto> init){ terminals.setAll(init); }
     @Override public List<TerminalDto> collectResult(){ return new ArrayList<>(terminals); }
+
+    @FXML private void onDeleteTerminal() {
+        TerminalDto sel = terminalTable.getSelectionModel().getSelectedItem();
+        if (sel == null) return;
+        if (BackendClient.get().deleteTerminal(sel.getId())) {
+            terminals.remove(sel);
+        } else {
+            showError("Not success to delete terminal: " + sel.getId());
+        }
+    }
+
+    private void showError(String msg) {
+        new Alert(Alert.AlertType.ERROR, msg, ButtonType.OK).showAndWait();
+    }
 }

@@ -3,6 +3,7 @@ package com.portmanager.web;
 import com.portmanager.dto.*;
 import com.portmanager.service.*;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -28,7 +29,7 @@ public class PlanController {
 
     /* ---------- POST /data/generate?ships=XX ---------- */
     @PostMapping("/data/generate")
-    public ConditionsDto generate(@RequestParam(defaultValue = "20") int ships) {
+    public ConditionsDto generate(@RequestParam(defaultValue = "500") int ships) {
         generatorService.generate(ships);
         return dataService.getCurrentConditions();   // <-- we will return the finished script
     }
@@ -37,5 +38,19 @@ public class PlanController {
     @PostMapping("/plan")
     public PlanResponseDto getPlan(@RequestBody PlanningRequestDto req) {
         return planningService.generatePlan(req);
+    }
+
+    /* ---------- DELETE /ships/{id} ---------- */
+    @DeleteMapping("/ships/{id}")
+    public ResponseEntity<Void> deleteShip(@PathVariable Long id) {
+        dataService.deleteShip(id);
+        return ResponseEntity.noContent().build();             // 204
+    }
+
+    /* ---------- DELETE /terminals/{id} ---------- */
+    @DeleteMapping("/terminals/{id}")
+    public ResponseEntity<Void> deleteTerminal(@PathVariable Long id) {
+        dataService.deleteTerminal(id);
+        return ResponseEntity.noContent().build();             // 204
     }
 }

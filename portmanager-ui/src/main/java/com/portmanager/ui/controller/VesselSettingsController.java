@@ -3,6 +3,7 @@ package com.portmanager.ui.controller;
 import com.portmanager.ui.cells.DateTimePickerTableCell;
 import com.portmanager.ui.model.ShipDto;
 import com.portmanager.ui.model.TerminalDto;
+import com.portmanager.ui.service.BackendClient;
 import javafx.beans.property.ReadOnlyObjectWrapper;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
@@ -173,4 +174,25 @@ public class VesselSettingsController implements SettingsResult<ShipDto> {
     @Override public List<ShipDto> getData(){ return shipList; }
     @Override public void setData(List<ShipDto> data){ shipList.setAll(data); }
     @Override public List<ShipDto> collectResult(){ return List.copyOf(shipList); }
+
+    @FXML private void onDeleteShip() {
+        long numericId;
+        ShipDto sel = shipTable.getSelectionModel().getSelectedItem();
+        try {
+            numericId = Long.parseLong(sel.getId().replaceAll("\\D", ""));
+        } catch (NumberFormatException ex) {
+            showError("Incorrect vessel ID: " + sel.getId());
+            return;
+        }
+
+        if (BackendClient.get().deleteShip(numericId)) {
+            shipList.remove(sel);
+        } else {
+            showError("Unsuccess to delete vessel: " + sel.getId());
+        }
+    }
+
+    private void showError(String msg) {
+        new Alert(Alert.AlertType.ERROR, msg, ButtonType.OK).showAndWait();
+    }
 }

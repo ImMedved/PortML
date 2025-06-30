@@ -119,4 +119,16 @@ public class DataService {
                 OffsetDateTime.now().plusDays(7)
         );
     }
+
+    /* ---------- delete ---------- */
+    @Transactional
+    public void deleteShip(Long shipId) {
+        shipRepo.deleteById(shipId);
+    }
+
+    @Transactional
+    public void deleteTerminal(Long terminalId) {
+        closureRepo.deleteByTerminalId(terminalId);
+        terminalRepo.deleteById(terminalId);
+    }
 }

@@ -16,7 +16,6 @@ import java.util.Optional;
 public final class BackendClient {
 
     /* Singleton */
-
     private static volatile BackendClient INSTANCE;
 
     public static BackendClient get() {
@@ -89,29 +88,7 @@ public final class BackendClient {
         return Optional.empty();
     }
 
-    /** POST /data/save */
-    public boolean saveDataToDatabase(ConditionsDto scenario) {
-        try {
-            HttpRequest req = HttpRequest.newBuilder()
-                    .uri(URI.create(baseUrl + "/data/save"))
-                    .header("Content-Type", "application/json")
-                    .POST(HttpRequest.BodyPublishers.ofString(JSON.writeValueAsString(scenario)))
-                    .build();
-            http.send(req, HttpResponse.BodyHandlers.discarding());
-            return true;
-        } catch (IOException | InterruptedException e) {
-            e.printStackTrace();
-            return false;
-        }
-    }
-
-    /** Outdated dummy, idk implement it or not. */
-    public Optional<PlanResponseDto> getLastAcceptedPlan() {
-        return Optional.empty();
-    }
-
     /* helpers */
-
     private static String resolveBaseUrl() {
         String url = System.getProperty("backendUrl");
         if (url != null && !url.isBlank()) return url.trim();
@@ -127,5 +104,35 @@ public final class BackendClient {
             }
         } catch (Exception ignored) {}
         return "http://localhost:8080/api";
+    }
+
+    /* ---------- DELETE /ships/{id} ---------- */
+    public boolean deleteShip(long id) {
+        HttpRequest req = HttpRequest.newBuilder()
+                .uri(URI.create(baseUrl + "/ships/" + id))
+                .DELETE()
+                .build();
+        return sendVoid(req);
+    }
+
+    /* ---------- DELETE /terminals/{id} ---------- */
+    public boolean deleteTerminal(long id) {
+        HttpRequest req = HttpRequest.newBuilder()
+                .uri(URI.create(baseUrl + "/terminals/" + id))
+                .DELETE()
+                .build();
+        return sendVoid(req);
+    }
+
+    /* helper: true ⇔ 2xx */
+    private boolean sendVoid(HttpRequest req) {
+        try {
+            HttpResponse<Void> r =
+                    http.send(req, HttpResponse.BodyHandlers.discarding());
+            return r.statusCode() / 100 == 2;
+        } catch (IOException | InterruptedException e) {
+            e.printStackTrace();
+            return false;
+        }
     }
 }
