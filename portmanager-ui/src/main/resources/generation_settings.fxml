@@ -1,0 +1,104 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?import javafx.geometry.*?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+
+<BorderPane xmlns:fx="http://javafx.com/fxml"
+            fx:controller="com.portmanager.ui.controller.GenerationSettingsController"
+            prefWidth="520" prefHeight="420">
+
+    <center>
+        <ScrollPane fitToWidth="true">
+            <VBox spacing="12" style="-fx-padding:12;">
+                <TitledPane text="Ships" expanded="true">
+                    <GridPane hgap="8" vgap="4" style="-fx-padding:8;">
+                        <columnConstraints>
+                            <ColumnConstraints halignment="RIGHT" prefWidth="200"/>
+                            <ColumnConstraints halignment="LEFT"  prefWidth="120"/>
+                        </columnConstraints>
+
+                        <Label text="Count:"               GridPane.rowIndex="0"/>
+                        <Spinner fx:id="shipCount"         GridPane.rowIndex="0" GridPane.columnIndex="1"
+                                 editable="true" prefWidth="100"/>
+
+                        <Label text="Pilot:"             GridPane.rowIndex="1"/>
+                        <Spinner fx:id="pilotPercent"      GridPane.rowIndex="1" GridPane.columnIndex="1"
+                                 editable="true"/>
+
+                        <Label text="Customs:"           GridPane.rowIndex="2"/>
+                        <Spinner fx:id="customsPercent"    GridPane.rowIndex="2" GridPane.columnIndex="1"
+                                 editable="true"/>
+
+                        <Label text="Priority:"          GridPane.rowIndex="3"/>
+                        <Spinner fx:id="priorityPercent"   GridPane.rowIndex="3" GridPane.columnIndex="1"
+                                 editable="true"/>
+
+                        <Label text="Temperature:"       GridPane.rowIndex="4"/>
+                        <Spinner fx:id="tempPercent"       GridPane.rowIndex="4" GridPane.columnIndex="1"
+                                 editable="true"/>
+
+                        <!-- Cargo distribution -->
+                        <Label text="Cargo distribution (sum 100%)"
+                               GridPane.rowIndex="5" GridPane.columnSpan="2" style="-fx-font-weight:bold;"/>
+                        <Label text="Container:"           GridPane.rowIndex="6"/>
+                        <Spinner fx:id="cargoCont"         GridPane.rowIndex="6" GridPane.columnIndex="1"
+                                 editable="true"/>
+                        <Label text="Bulk:"                GridPane.rowIndex="7"/>
+                        <Spinner fx:id="cargoBulk"         GridPane.rowIndex="7" GridPane.columnIndex="1"
+                                 editable="true"/>
+                        <Label text="Oil:"                 GridPane.rowIndex="8"/>
+                        <Spinner fx:id="cargoOil"          GridPane.rowIndex="8" GridPane.columnIndex="1"
+                                 editable="true"/>
+                        <Label text="LNG:"                 GridPane.rowIndex="9"/>
+                        <Spinner fx:id="cargoLng"          GridPane.rowIndex="9" GridPane.columnIndex="1"
+                                 editable="true"/>
+                        <Label text="General:"             GridPane.rowIndex="10"/>
+                        <Spinner fx:id="cargoGen"          GridPane.rowIndex="10" GridPane.columnIndex="1"
+                                 editable="true"/>
+                    </GridPane>
+                </TitledPane>
+
+                <TitledPane text="Terminals" expanded="true">
+                    <GridPane hgap="8" vgap="4" style="-fx-padding:8;">
+                        <columnConstraints>
+                            <ColumnConstraints halignment="RIGHT" prefWidth="200"/>
+                            <ColumnConstraints halignment="LEFT"  prefWidth="120"/>
+                        </columnConstraints>
+
+                        <Label text="Count:"               GridPane.rowIndex="0"/>
+                        <Spinner fx:id="termCount"         GridPane.rowIndex="0" GridPane.columnIndex="1"
+                                 editable="true"/>
+
+                        <Label text="Universal %:"         GridPane.rowIndex="1"/>
+                        <Spinner fx:id="termUniv"          GridPane.rowIndex="1" GridPane.columnIndex="1"
+                                 editable="true"/>
+
+                        <Label text="Container %:"         GridPane.rowIndex="2"/>
+                        <Spinner fx:id="termCont"          GridPane.rowIndex="2" GridPane.columnIndex="1"
+                                 editable="true"/>
+
+                        <Label text="Bulk %:"              GridPane.rowIndex="3"/>
+                        <Spinner fx:id="termBulk"          GridPane.rowIndex="3" GridPane.columnIndex="1"
+                                 editable="true"/>
+
+                        <Label text="Oil %:"               GridPane.rowIndex="4"/>
+                        <Spinner fx:id="termOil"           GridPane.rowIndex="4" GridPane.columnIndex="1"
+                                 editable="true"/>
+
+                        <Label text="LNG %:"               GridPane.rowIndex="5"/>
+                        <Spinner fx:id="termLng"           GridPane.rowIndex="5" GridPane.columnIndex="1"
+                                 editable="true"/>
+                    </GridPane>
+                </TitledPane>
+            </VBox>
+        </ScrollPane>
+    </center>
+
+    <!-- buttons -->
+    <bottom>
+        <HBox spacing="10" alignment="CENTER_RIGHT" style="-fx-padding:8;">
+            <Button text="Cancel" onAction="#onCancel"/>
+            <Button text="Generate" defaultButton="true" onAction="#onOk"/>
+        </HBox>
+    </bottom>
+</BorderPane>

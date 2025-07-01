@@ -124,6 +124,21 @@ public final class BackendClient {
         return sendVoid(req);
     }
 
+    /* ---------- Generate custom dataset ---------- */
+    public Optional<ConditionsDto> requestCustomData(GenerationConfigDto cfg) {
+        try {
+            HttpRequest req = HttpRequest.newBuilder()
+                    .uri(URI.create(baseUrl + "/data/generate-custom"))
+                    .header("Content-Type", "application/json")
+                    .POST(HttpRequest.BodyPublishers.ofString(JSON.writeValueAsString(cfg)))
+                    .build();
+            HttpResponse<String> resp = http.send(req, HttpResponse.BodyHandlers.ofString());
+            if (resp.statusCode() == 200 && !resp.body().isBlank())
+                return Optional.of(JSON.readValue(resp.body(), ConditionsDto.class));
+        } catch (IOException | InterruptedException e) { e.printStackTrace(); }
+        return Optional.empty();
+    }
+
     /* helper: true ⇔ 2xx */
     private boolean sendVoid(HttpRequest req) {
         try {

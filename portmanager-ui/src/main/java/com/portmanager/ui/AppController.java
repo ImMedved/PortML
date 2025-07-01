@@ -10,6 +10,7 @@
 package com.portmanager.ui;
 
 import com.portmanager.ui.board.ManualBoardController;
+import com.portmanager.ui.controller.GenerationSettingsController;
 import com.portmanager.ui.controller.ScheduleController;
 import com.portmanager.ui.controller.SettingsResult;
 import com.portmanager.ui.model.*;
@@ -20,13 +21,13 @@ import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
-import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.*;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.Line;
 import javafx.scene.shape.Rectangle;
 import javafx.scene.text.Text;
 import javafx.stage.Stage;
+import com.portmanager.ui.model.GenerationConfigDto;
 
 import java.io.IOException;
 import java.time.*;
@@ -186,6 +187,39 @@ public class AppController {
             showErr("No data received");
         });
     }
+
+    @FXML
+    private void openGenerationSettings() {
+        try {
+            FXMLLoader l = new FXMLLoader(getClass().getResource("/generation_settings.fxml"));
+            Parent root = l.load();
+            GenerationSettingsController ctrl = l.getController();
+
+            Stage dlg = new Stage();
+            dlg.setTitle("Generator Settings");
+            dlg.initOwner(shipTable.getScene().getWindow());
+            dlg.setScene(new Scene(root));
+            dlg.showAndWait();
+
+            GenerationConfigDto cfg = ctrl.getResult();
+            if (cfg == null) return;              // cancelled
+
+            setStatus("Requesting custom data…");
+            backendClient.requestCustomData(cfg).ifPresentOrElse(dto -> {
+                manualTerms  = dto.terminals();
+                manualShips  = dto.ships();
+                manualEvents = dto.events();
+                terminalCount.setText(String.valueOf(manualTerms.size()));
+                vesselCount.setText(String.valueOf(manualShips.size()));
+                eventCount.setText(String.valueOf(manualEvents.size()));
+                refreshShipTable();
+                setStatus("Custom data loaded");
+            }, () -> setStatus("Failed to load custom data"));
+        } catch (Exception ex) {
+            ex.printStackTrace();
+        }
+    }
+
 
     @FXML
     private void onSubmitManualPlan() {

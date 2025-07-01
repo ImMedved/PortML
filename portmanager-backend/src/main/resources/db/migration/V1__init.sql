@@ -68,3 +68,7 @@ ALTER TABLE ships
     ADD COLUMN arrival_window_start     TIMESTAMPTZ,
     ADD COLUMN arrival_window_end       TIMESTAMPTZ,
     ADD COLUMN expected_delay_hours     DOUBLE PRECISION;
+
+ALTER TABLE ships
+    ADD COLUMN load_duration_hours       DOUBLE PRECISION,
+    ADD COLUMN expected_departure_time   TIMESTAMPTZ;

@@ -15,6 +15,7 @@
 
             <Button text="Generate Plan" onAction="#onGeneratePlan"/>
             <Button text="Random Data"  onAction="#onRandomData"/>
+            <Button text="Advanced Settings" onAction="#openGenerationSettings"/>
 
             <Button text="Edit Terminals" onAction="#openTerminalSettings"/>
             <Button text="Edit Vessels"   onAction="#openVesselSettings"/>

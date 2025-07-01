@@ -65,4 +65,11 @@ public class ShipEntity {
 
     @Column(nullable = true)
     private double expectedDelayHours;
+
+    @Column(name = "load_duration_hours")
+    private Double loadDurationHours;
+
+    @Column(name = "expected_departure_time")
+    private OffsetDateTime expectedDepartureTime;
+
 }
