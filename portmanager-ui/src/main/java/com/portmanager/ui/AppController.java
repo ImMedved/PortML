@@ -29,6 +29,13 @@ import javafx.scene.text.Text;
 import javafx.stage.Stage;
 import com.portmanager.ui.model.GenerationConfigDto;
 
+import javafx.embed.swing.SwingFXUtils;
+import javafx.scene.SnapshotParameters;
+import javafx.scene.image.WritableImage;
+import javax.imageio.ImageIO;
+import java.io.File;
+
+
 import java.io.IOException;
 import java.time.*;
 import java.util.*;
@@ -135,6 +142,7 @@ public class AppController {
         mlScroll.setFitToHeight(true);
         mlScroll.setFitToWidth(false); // disable stretching
         mlScroll.setHbarPolicy(ScrollPane.ScrollBarPolicy.ALWAYS); // show scroll bar
+        mlScroll.setVbarPolicy(ScrollPane.ScrollBarPolicy.AS_NEEDED);
         mlScroll.setContent(mlDiagram);
 
         manualScroll.setFitToWidth(false);
@@ -144,6 +152,39 @@ public class AppController {
     }
 
     /* actions */
+
+    @FXML private void exportMlPng()    { exportDiagram(mlDiagram, "ml_plan"); }
+    @FXML private void exportManualPng(){ exportDiagram(manualPane   , "manual_plan"); }
+
+    private void exportDiagram(Pane pane, String baseName) {
+        try {
+            WritableImage img = pane.snapshot(new SnapshotParameters(), null);
+            File out = new File(baseName + "_" + System.currentTimeMillis() + ".png");
+            ImageIO.write(SwingFXUtils.fromFXImage(img, null), "png", out);
+            setStatus("Saved " + out.getName());
+        } catch (Exception ex) {
+            ex.printStackTrace();
+            showErr("Export failed: " + ex.getMessage());
+        }
+    /*
+        PDF
+        PDDocument pdf = new PDDocument();
+        PDPage page = new PDPage(new PDRectangle((float)img.getWidth(), (float)img.getHeight()));
+        pdf.addPage(page);
+        PDImageXObject pdImg = LosslessFactory.createFromImage(pdf, SwingFXUtils.fromFXImage(img,null));
+        try (PDPageContentStream cs = new PDPageContentStream(pdf, page)) {
+            cs.drawImage(pdImg, 0, 0);
+        }
+        pdf.save(baseName+".pdf"); pdf.close();
+    */
+    }
+
+    /* ---------- clear manual plan ---------- */
+    @FXML private void onClearManual() {
+        manualPane.getChildren().clear();
+        manualBoardController.clearInternal();
+        setStatus("Manual plan cleared");
+    }
 
     /** Generate Plan */
     @FXML
@@ -319,6 +360,9 @@ public class AppController {
                            List<TerminalDto> terminals,
                            List<EventDto> events,
                            List<ShipDto> ships) {
+
+            setMinHeight(USE_PREF_SIZE);
+            setMinWidth (USE_PREF_SIZE);
 
             getChildren().clear();
             if (plan == null) return;

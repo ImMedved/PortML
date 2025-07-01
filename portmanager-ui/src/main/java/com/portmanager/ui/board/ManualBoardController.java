@@ -336,4 +336,10 @@ public class ManualBoardController {
     private static long durHours(OffsetDateTime a, OffsetDateTime b) {
         return Duration.between(a, b).toHours();
     }
+
+    /** Clear maps after external wipe. */
+    public void clearInternal() {
+        viewByShip.clear();
+        labelByShip.clear();
+    }
 }
