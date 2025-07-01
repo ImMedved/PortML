@@ -292,11 +292,14 @@ public class AppController {
             /* data preparation */
             /* terminals (save the order of addition) */
             LinkedHashSet<String> termSet = new LinkedHashSet<>();
-            terminals.forEach(t -> termSet.add(String.valueOf(t.getId())));
+            terminals.stream()
+                    .filter(t -> !"Raid".equalsIgnoreCase(t.getName()))
+                    .forEach(t -> termSet.add(String.valueOf(t.getId())));
             plan.getSchedule().forEach(s -> termSet.add(s.getTerminalId()));
 
-            termSet.add("CUSTOMS");          // customs inspection line
-            termSet.add("RAID");             // anchorage / waiting line
+            /* prepend virtual lines */
+            termSet.add("CUSTOMS");
+            termSet.add("RAID");
 
             List<String> termList = new ArrayList<>(termSet);
             termList.remove("CUSTOMS");
