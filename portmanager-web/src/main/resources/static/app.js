@@ -344,15 +344,17 @@ function enableDrag(view, item, minStart) {
 }
 
 /* --------------------------------------------------------------------- *
- *  Schedule table (right section)
+ *  Schedule table (under plan diagrams)
  * --------------------------------------------------------------------- */
 function renderScheduleTable() {
+    const src =  (manualSchedule && manualSchedule.length)
+               ? manualSchedule
+               : mlSchedule;
 
     tblSchedule.innerHTML = '';
-    if (!manualSchedule) return;
+    if (!src?.length) return;
 
-    manualSchedule
-        .slice()
+    src.slice()
         .sort((a, b) => Date.parse(a.start) - Date.parse(b.start))
         .forEach(it => {
             const tr = document.createElement('tr');
