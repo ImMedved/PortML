@@ -81,7 +81,6 @@ label{ display:block; margin:.25rem 0; }
 #tblSchedule{
   max-height:220px;
   overflow:auto;
-  display:block;
 }
 #tblSchedule thead, #tblSchedule tbody{
   display:block;
@@ -92,6 +91,12 @@ label{ display:block; margin:.25rem 0; }
 }
 #tblSchedule th, #tblSchedule td{
   width:120px;
+}
+#tblSchedule thead tr,
+#tblSchedule tbody tr{
+  display:table;
+  width:100%;
+  table-layout:fixed;
 }
 .event-weather {
   background:rgba(30,144,255,.25);
