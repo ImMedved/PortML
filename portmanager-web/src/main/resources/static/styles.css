@@ -50,7 +50,6 @@ html,body{
   border:1px solid #cfd1d6;
   max-height:400px;
   flex: 0 0 auto;
-
 }
 
 .block{
@@ -94,3 +93,39 @@ label{ display:block; margin:.25rem 0; }
 #tblSchedule th, #tblSchedule td{
   width:120px;
 }
+.event-weather {
+  background:rgba(30,144,255,.25);
+}
+.event-closure{
+  background:rgba(255,0,0,.35);
+}
+
+.grid-lines{
+  pointer-events:none;
+  display:contents;
+}
+
+.v-line{
+  background:#ccc;
+  opacity:.4;
+}
+
+.h-line{
+  border-top:1px solid #ddd;
+}
+
+.day-label{
+  font-size:11px;
+  color:#555;
+  transform:translateY(-12px);
+}
+
+dialog.modal-lg{width:520px;max-width:96vw}
+dialog.modal-md{width:760px}
+dialog.modal-sm{width:600px}
+.form-grid   td{padding:.2rem .4rem;text-align:right}
+.form-grid   input{width:80px;text-align:center}
+.crud-table{width:100%;border-collapse:collapse;font-size:.84rem}
+.crud-table th,.crud-table td{border:1px solid #ddd;padding:.2rem .3rem;text-align:center}
+.crud-table tbody tr:nth-child(even){background:#f7f7f7}
+.crud-bar{display:flex;gap:.5rem;justify-content:flex-end;margin-top:.6rem}
