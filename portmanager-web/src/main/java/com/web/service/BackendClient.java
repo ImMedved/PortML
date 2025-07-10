@@ -1,0 +1,155 @@
+package com.web.service;
+
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.SerializationFeature;
+import com.web.model.*;
+import org.springframework.stereotype.Component;
+
+import java.io.IOException;
+import java.net.URI;
+import java.net.http.*;
+import java.time.Duration;
+import java.util.Optional;
+
+/**
+ * REST-client to server. Singleton.
+ */
+@Component
+public final class BackendClient {
+
+    /* Singleton */
+    private static volatile BackendClient INSTANCE;
+
+    public static BackendClient get() {
+        if (INSTANCE == null) {
+            synchronized (BackendClient.class) {
+                if (INSTANCE == null) INSTANCE = new BackendClient();
+            }
+        }
+        return INSTANCE;
+    }
+
+    private final String baseUrl;                 // http://host:8080/api
+    private final HttpClient http;
+    private static final ObjectMapper JSON = new ObjectMapper()
+            .findAndRegisterModules()
+            .disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
+
+    private BackendClient() {
+        this.baseUrl = resolveBaseUrl();
+        this.http = HttpClient.newBuilder()
+                .connectTimeout(Duration.ofSeconds(5))
+                .build();
+        System.out.println("[BackendClient] baseUrl = " + baseUrl);
+    }
+
+    //Public method to call AppController
+    // POST /plan — return Optional with plan
+    public Optional<PlanResponseDto> generatePlan(ConditionsDto scenario) {
+
+        PlanningRequestDto req = new PlanningRequestDto(scenario, "baseline");
+        HttpRequest request;
+        try {
+            request = HttpRequest.newBuilder()
+                    .uri(URI.create(baseUrl + "/plan"))
+                    .header("Content-Type", "application/json")
+                    .POST(HttpRequest.BodyPublishers.ofString(JSON.writeValueAsString(req)))
+                    .build();
+        } catch (Exception e) {
+            e.printStackTrace();
+            return Optional.empty();
+        }
+
+        try {
+            HttpResponse<String> resp =
+                    http.send(request, HttpResponse.BodyHandlers.ofString());
+
+            if (resp.statusCode() == 200 && !resp.body().isBlank()) {
+                return Optional.of(JSON.readValue(resp.body(), PlanResponseDto.class));
+            }
+        } catch (IOException | InterruptedException e) {
+            e.printStackTrace();
+        }
+        return Optional.empty();
+    }
+
+    /* POST /data/generate */
+    public Optional<ConditionsDto> requestRandomData(int ships) {
+        HttpRequest req = HttpRequest.newBuilder()
+                .uri(URI.create(baseUrl + "/data/generate?ships=" + ships))
+                .POST(HttpRequest.BodyPublishers.noBody())
+                .build();
+        try {
+            HttpResponse<String> resp = http.send(req, HttpResponse.BodyHandlers.ofString());
+            if (resp.statusCode() == 200 && !resp.body().isBlank()) {
+                return Optional.of(JSON.readValue(resp.body(), ConditionsDto.class));
+            }
+        } catch (IOException | InterruptedException e) {
+            e.printStackTrace();
+        }
+        return Optional.empty();
+    }
+
+    /* helpers */
+    private static String resolveBaseUrl() {
+        String url = System.getProperty("backendUrl");
+        if (url != null && !url.isBlank()) return url.trim();
+        url = System.getenv("UI_BACKEND_URL");
+        if (url != null && !url.isBlank()) return url.trim();
+        try (var is = BackendClient.class.getClassLoader()
+                .getResourceAsStream("config.properties")) {
+            if (is != null) {
+                var p = new java.util.Properties();
+                p.load(is);
+                url = p.getProperty("backend.url");
+                if (url != null && !url.isBlank()) return url.trim();
+            }
+        } catch (Exception ignored) {}
+        return "http://localhost:8080/api";
+    }
+
+    /* ---------- DELETE /ships/{id} ---------- */
+    public boolean deleteShip(long id) {
+        HttpRequest req = HttpRequest.newBuilder()
+                .uri(URI.create(baseUrl + "/ships/" + id))
+                .DELETE()
+                .build();
+        return sendVoid(req);
+    }
+
+    /* ---------- DELETE /terminals/{id} ---------- */
+    public boolean deleteTerminal(long id) {
+        HttpRequest req = HttpRequest.newBuilder()
+                .uri(URI.create(baseUrl + "/terminals/" + id))
+                .DELETE()
+                .build();
+        return sendVoid(req);
+    }
+
+    /* ---------- Generate custom dataset ---------- */
+    public Optional<ConditionsDto> requestCustomData(GenerationConfigDto cfg) {
+        try {
+            HttpRequest req = HttpRequest.newBuilder()
+                    .uri(URI.create(baseUrl + "/data/generate-custom"))
+                    .header("Content-Type", "application/json")
+                    .POST(HttpRequest.BodyPublishers.ofString(JSON.writeValueAsString(cfg)))
+                    .build();
+            HttpResponse<String> resp = http.send(req, HttpResponse.BodyHandlers.ofString());
+            if (resp.statusCode() == 200 && !resp.body().isBlank())
+                return Optional.of(JSON.readValue(resp.body(), ConditionsDto.class));
+        } catch (IOException | InterruptedException e) { e.printStackTrace(); }
+        return Optional.empty();
+    }
+
+    /* helper: true ⇔ 2xx */
+    private boolean sendVoid(HttpRequest req) {
+        try {
+            HttpResponse<Void> r =
+                    http.send(req, HttpResponse.BodyHandlers.discarding());
+            return r.statusCode() / 100 == 2;
+        } catch (IOException | InterruptedException e) {
+            e.printStackTrace();
+            return false;
+        }
+    }
+}
